@@ -10,6 +10,8 @@ import { sortSessionsByDate } from "../kernel/sortByDate";
 import { slugifyFilename } from "../kernel/markdownToPdfBlocks";
 import { markdownToHtml } from "./markdownToHtml";
 
+const SITE_BUILD_VERSION = "2026-06-23-pdf-v2";
+
 function escapeHtml(value) {
   return String(value ?? "")
     .replace(/&/g, "&amp;")
@@ -107,6 +109,7 @@ function renderSessionPage(session, phase) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>${escapeHtml(titlePrefix + session.title)} · SPEED</title>
   <link rel="stylesheet" href="../site.css" />
+  <!-- SPEED build: ${SITE_BUILD_VERSION} -->
 </head>
 <body>
   <div class="pv-wrapper">
@@ -138,6 +141,11 @@ function renderSessionPage(session, phase) {
               ${escapeHtml(statusCfg.label)}
             </span>
           </div>
+          <div class="pv-hero__pdf">
+            <a class="site-pdf-btn site-pdf-btn--hero" href="${session.id}.pdf" download="${escapeHtml(pdfName)}">
+              ↓ Descargar síntesis completa (PDF)
+            </a>
+          </div>
         </div>
       </div>
 
@@ -165,15 +173,22 @@ function renderIndexSessionItem(session) {
   const pill = renderStatusPill(session.status);
 
   if (canStudentAccessSession(session.status)) {
+    const pdfName = sessionPdfDownloadName(session);
     return `<li>
-      <a class="site-session-card" href="${sessionPagePath(session.id)}"
-         style="border-left-color:${statusCfg.border}">
-        <div class="site-session-card__head">
-          <strong>${escapeHtml(label)}</strong>
-          ${pill}
+      <div class="site-session-card-wrap" style="border-left-color:${statusCfg.border}">
+        <a class="site-session-card site-session-card__main" href="${sessionPagePath(session.id)}">
+          <div class="site-session-card__head">
+            <strong>${escapeHtml(label)}</strong>
+            ${pill}
+          </div>
+          <div class="site-session-list__meta">${escapeHtml(meta)}</div>
+        </a>
+        <div class="site-session-card__pdf">
+          <a class="site-pdf-btn site-pdf-btn--card" href="${sessionPdfPath(session.id)}" download="${escapeHtml(pdfName)}">
+            ↓ Descargar PDF
+          </a>
         </div>
-        <div class="site-session-list__meta">${escapeHtml(meta)}</div>
-      </a>
+      </div>
     </li>`;
   }
 
@@ -230,6 +245,7 @@ function renderIndexPage(phases, allSessions) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SPEED · Guía del curso</title>
   <link rel="stylesheet" href="site.css" />
+  <!-- SPEED build: ${SITE_BUILD_VERSION} -->
 </head>
 <body>
   <div class="pv-wrapper">
@@ -269,12 +285,18 @@ export async function generateSiteFiles(phases, sessions, options = {}) {
     const phase = phases.find((p) => p.id === session.phase_id);
     files[sessionPagePath(session.id)] = renderSessionPage(session, phase);
 
-    const videos = videosBySessionId[session.id] || [];
-    const pdfBase64 = await generateSessionPdfBase64(session, phase, videos);
-    files[sessionPdfPath(session.id)] = {
-      encoding: "base64",
-      content: pdfBase64,
-    };
+    try {
+      const videos = videosBySessionId[session.id] || [];
+      const pdfBase64 = await generateSessionPdfBase64(session, phase, videos);
+      files[sessionPdfPath(session.id)] = {
+        encoding: "base64",
+        content: pdfBase64,
+      };
+    } catch (err) {
+      throw new Error(
+        `Error al generar PDF de "${session.title}": ${err.message}`
+      );
+    }
   }
 
   return {

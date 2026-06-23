@@ -74,7 +74,7 @@ export function PublishButton({ phases, sessions, onResult }) {
         }
       >
         <IconWorldUpload size={16} />
-        {publishing ? "Publicando..." : "Publicar al sitio"}
+        {publishing ? "Generando sitio y PDFs..." : "Publicar al sitio"}
       </button>
       <span className="publish-bar__hint">
         {sessions.length} clases · {accessible.length} accesibles · {config.owner}/{config.repo}

@@ -24,14 +24,19 @@ export function getSessionPdfFilename(session) {
 /** PDF en base64 para publicar en el sitio estático. */
 export async function generateSessionPdfBase64(session, phase, videos = []) {
   const blob = await renderSessionPdfBlob(session, phase, videos);
-  const arrayBuffer = await blob.arrayBuffer();
-  const bytes = new Uint8Array(arrayBuffer);
-  let binary = "";
-  const chunkSize = 0x8000;
-  for (let i = 0; i < bytes.length; i += chunkSize) {
-    binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
-  }
-  return btoa(binary);
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result;
+      if (typeof dataUrl !== "string" || !dataUrl.includes(",")) {
+        reject(new Error("No se pudo codificar el PDF"));
+        return;
+      }
+      resolve(dataUrl.split(",")[1]);
+    };
+    reader.onerror = () => reject(new Error("Error al leer el PDF generado"));
+    reader.readAsDataURL(blob);
+  });
 }
 
 /**
