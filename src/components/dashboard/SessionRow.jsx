@@ -5,6 +5,8 @@ import {
   IconUsers,
   IconFile,
   IconPencil,
+  IconSettings,
+  IconTrash,
 } from "@tabler/icons-react";
 import {
   PHASE_COLORS,
@@ -27,7 +29,14 @@ function getShortName(email) {
   return name.charAt(0).toUpperCase() + name.slice(1);
 }
 
-export function SessionRow({ session, phase, onClick }) {
+export function SessionRow({
+  session,
+  phase,
+  onClick,
+  onEditMeta,
+  onDelete,
+  readOnly,
+}) {
   const color = PHASE_COLORS[phase?.code] || "#888";
   const Icon = TYPE_ICON_MAP[session.session_type] || IconFile;
   const progress = useMemo(() => getSessionProgress(session), [session]);
@@ -35,67 +44,100 @@ export function SessionRow({ session, phase, onClick }) {
   const statusCfg = getStatusConfig(session.status);
 
   return (
-    <button
-      className="session-row"
+    <div
+      className="session-row-wrap"
       data-status={session.status}
       style={{ borderLeftColor: statusCfg.border }}
-      onClick={onClick}
     >
-      <span
-        className="session-row__icon"
-        style={{ background: `${color}15`, color }}
-      >
-        <Icon size={18} />
-      </span>
-      <div className="session-row__info">
-        <div className="session-row__title">
-          {session.session_number
-            ? `Sesión ${session.session_number}: `
-            : ""}
-          {session.title}
-        </div>
-        <div className="session-row__meta">
-          <span>{MODALITY_LABELS[session.modality]}</span>
-          <span>·</span>
-          <span>{session.scheduled_date}</span>
-          {editorName && (
-            <>
-              <span>·</span>
-              <span className="session-row__editor" title={`Editado por ${session.last_edited_by}`}>
-                <IconPencil size={11} />
-                {editorName} · {formatRelativeTime(session.last_edited_at)}
+      <button type="button" className="session-row" onClick={onClick}>
+        <span
+          className="session-row__icon"
+          style={{ background: `${color}15`, color }}
+        >
+          <Icon size={18} />
+        </span>
+        <div className="session-row__info">
+          <div className="session-row__title">
+            {session.session_number
+              ? `Sesión ${session.session_number}: `
+              : ""}
+            {session.title}
+          </div>
+          <div className="session-row__meta">
+            <span>Fase {phase?.code}</span>
+            <span>·</span>
+            <span>{MODALITY_LABELS[session.modality]}</span>
+            <span>·</span>
+            <span>{session.scheduled_date || "Sin fecha"}</span>
+            {editorName && (
+              <>
+                <span>·</span>
+                <span
+                  className="session-row__editor"
+                  title={`Editado por ${session.last_edited_by}`}
+                >
+                  <IconPencil size={11} />
+                  {editorName} · {formatRelativeTime(session.last_edited_at)}
+                </span>
+              </>
+            )}
+          </div>
+          {progress.total > 0 && (
+            <div className="session-row__progress">
+              <div className="session-row__progress-dots">
+                {progress.sections.map((sec) => (
+                  <span
+                    key={sec.id}
+                    className={`progress-dot ${
+                      sec.skipped
+                        ? "progress-dot--skipped"
+                        : sec.done
+                          ? "progress-dot--done"
+                          : ""
+                    }`}
+                    style={sec.done ? { background: color } : undefined}
+                    title={`${sec.label}: ${sec.skipped ? "N/A" : sec.done ? "✓" : "Pendiente"}`}
+                  />
+                ))}
+              </div>
+              <span
+                className="session-row__progress-text"
+                style={{ color }}
+              >
+                {progress.filled}/{progress.total} comp.
               </span>
-            </>
+            </div>
           )}
         </div>
-        {progress.total > 0 && (
-          <div className="session-row__progress">
-            <div className="session-row__progress-dots">
-              {progress.sections.map((sec) => (
-                <span
-                  key={sec.id}
-                  className={`progress-dot ${
-                    sec.skipped
-                      ? "progress-dot--skipped"
-                      : sec.done
-                        ? "progress-dot--done"
-                        : ""
-                  }`}
-                  style={sec.done ? { background: color } : undefined}
-                  title={`${sec.label}: ${sec.skipped ? "N/A" : sec.done ? "✓" : "Pendiente"}`}
-                />
-              ))}
-            </div>
-            <span
-              className="session-row__progress-text"
-              style={{ color }}
-            >
-              {progress.filled}/{progress.total} comp.
-            </span>
-          </div>
-        )}
-      </div>
-      <StatusBadge status={session.status} />
-    </button>
+        <StatusBadge status={session.status} />
+      </button>
+
+      {!readOnly && (
+        <div className="session-row__actions">
+          <button
+            type="button"
+            className="btn-icon session-row__action"
+            title="Editar fase, fecha y datos"
+            onClick={(e) => {
+              e.stopPropagation();
+              onEditMeta?.(session);
+            }}
+          >
+            <IconSettings size={16} />
+          </button>
+          <button
+            type="button"
+            className="btn-icon session-row__action session-row__action--danger"
+            title="Eliminar clase"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete?.(session);
+            }}
+          >
+            <IconTrash size={16} />
+          </button>
+        </div>
+      )}
+    </div>
   );
 }

@@ -1,17 +1,30 @@
 import { useState, useMemo } from "react";
-import { IconLogout, IconEye, IconKey } from "@tabler/icons-react";
+import { IconLogout, IconEye, IconKey, IconPlus } from "@tabler/icons-react";
 import { PHASE_COLORS } from "../../utils/constants";
 import { getClassPermissions } from "../../kernel/permissions";
 import { sortSessionsByDate } from "../../kernel/sortByDate";
 import { PhaseCard } from "./PhaseCard";
 import { SessionRow } from "./SessionRow";
+import { SessionMetaModal } from "./SessionMetaModal";
 import { StatsBar } from "./StatsBar";
 import { ChangePasswordModal } from "../ui/ChangePasswordModal";
 import { PublishButton } from "../publish/PublishButton";
 
-export function DashboardView({ phases, sessions, user, onSignOut, onEditSession, onChangePassword, onPublishResult }) {
+export function DashboardView({
+  phases,
+  sessions,
+  user,
+  onSignOut,
+  onEditSession,
+  onChangePassword,
+  onPublishResult,
+  onCreateSession,
+  onUpdateSessionMetadata,
+  onDeleteSession,
+}) {
   const [selectedPhase, setSelectedPhase] = useState(null);
   const [showChangePassword, setShowChangePassword] = useState(false);
+  const [metaModal, setMetaModal] = useState(null);
   const isSupervisor = user?.role === "supervisor";
   const isAdmin = user?.role === "admin";
   const permissions = getClassPermissions(user?.role);
@@ -33,6 +46,36 @@ export function DashboardView({ phases, sessions, user, onSignOut, onEditSession
   const filteredSessions = selectedPhase
     ? sortedSessions.filter((s) => s.phase_id === selectedPhase)
     : sortedSessions;
+
+  const handleDelete = async (session) => {
+    const label = session.session_number
+      ? `Sesión ${session.session_number}: ${session.title}`
+      : session.title;
+    const ok = window.confirm(
+      `¿Eliminar "${label}"?\n\nSe borrará la clase y su contenido. Esta acción no se puede deshacer.`
+    );
+    if (!ok) return;
+    try {
+      await onDeleteSession(session.id);
+      onPublishResult?.("Clase eliminada", false);
+    } catch (err) {
+      onPublishResult?.(err.message || "Error al eliminar", true);
+    }
+  };
+
+  const handleMetaSave = async (form) => {
+    if (metaModal?.mode === "create") {
+      await onCreateSession(form);
+      onPublishResult?.("Clase creada correctamente", false);
+    } else {
+      await onUpdateSessionMetadata(form);
+      onPublishResult?.("Datos de la clase actualizados", false);
+    }
+  };
+
+  const phaseFilterLabel = selectedPhase
+    ? phases.find((p) => p.id === selectedPhase)?.code
+    : null;
 
   return (
     <div className="dashboard">
@@ -99,16 +142,48 @@ export function DashboardView({ phases, sessions, user, onSignOut, onEditSession
       </div>
 
       <div className="session-list">
+        <div className="session-list__toolbar">
+          <span className="session-list__heading">
+            {phaseFilterLabel
+              ? `Clases — Fase ${phaseFilterLabel} (ordenadas por fecha)`
+              : "Temario completo (ordenado por fecha)"}
+          </span>
+          {permissions.canEdit && (
+            <button
+              type="button"
+              className="btn btn--primary"
+              onClick={() => setMetaModal({ mode: "create" })}
+            >
+              <IconPlus size={16} /> Nueva clase
+            </button>
+          )}
+        </div>
+
         {filteredSessions.map((s) => (
           <SessionRow
             key={s.id}
             session={s}
             phase={phases.find((p) => p.id === s.phase_id)}
             onClick={() => onEditSession(s)}
+            onEditMeta={(session) =>
+              setMetaModal({ mode: "edit", session })
+            }
+            onDelete={handleDelete}
             readOnly={permissions.readOnly}
           />
         ))}
       </div>
+
+      {metaModal && (
+        <SessionMetaModal
+          mode={metaModal.mode}
+          session={metaModal.session}
+          phases={phases}
+          sessions={sessions}
+          onClose={() => setMetaModal(null)}
+          onSave={handleMetaSave}
+        />
+      )}
     </div>
   );
 }

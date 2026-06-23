@@ -16,6 +16,9 @@ export default function App() {
     loading: sessionsLoading,
     error: sessionsError,
     saveSession,
+    createSession,
+    updateSessionMetadata,
+    deleteSession,
     getVideos,
   } = useSessions(user);
 
@@ -125,6 +128,11 @@ export default function App() {
           onEditSession={handleEditSession}
           onChangePassword={changePassword}
           onPublishResult={(msg, isError) => showToast(msg, isError)}
+          onCreateSession={(data) => createSession(data, user?.email)}
+          onUpdateSessionMetadata={(data) =>
+            updateSessionMetadata(data, user?.email)
+          }
+          onDeleteSession={(id) => deleteSession(id, user?.email)}
         />
       ) : null}
     </div>

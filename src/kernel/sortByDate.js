@@ -76,3 +76,35 @@ export function toIsoDateString(raw) {
   const day = String(d.getDate()).padStart(2, "0");
   return `${y}-${m}-${day}`;
 }
+
+const MONTH_NAMES_ES = [
+  "enero",
+  "febrero",
+  "marzo",
+  "abril",
+  "mayo",
+  "junio",
+  "julio",
+  "agosto",
+  "septiembre",
+  "octubre",
+  "noviembre",
+  "diciembre",
+];
+
+/** ISO YYYY-MM-DD → "7 de julio de 2026" */
+export function formatSpanishDate(isoDate) {
+  if (!isoDate) return "";
+  const parts = String(isoDate).split("-").map(Number);
+  if (parts.length !== 3) return "";
+  const [year, month, day] = parts;
+  if (!year || !month || !day || month < 1 || month > 12) return "";
+  return `${day} de ${MONTH_NAMES_ES[month - 1]} de ${year}`;
+}
+
+/** Valor para <input type="date"> desde una sesión */
+export function getDateInputValue(session) {
+  if (!session) return "";
+  if (session.scheduled_date_iso) return session.scheduled_date_iso;
+  return toIsoDateString(session.scheduled_date) || "";
+}
