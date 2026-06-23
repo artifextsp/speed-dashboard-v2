@@ -11,6 +11,7 @@ import { PHASE_COLORS, MODALITY_LABELS } from "../../utils/constants";
 import { resolveClassComponents } from "../../kernel/legacyMigration";
 import { withDisplayNumbers } from "../../kernel/componentManager";
 import { getStatusConfig } from "../../kernel/statusManager";
+import { DownloadPdfButton } from "../export/DownloadPdfButton";
 
 function AccordionSection({ number, title, description, color, children, defaultOpen = false }) {
   const [open, setOpen] = useState(defaultOpen);
@@ -35,7 +36,7 @@ function AccordionSection({ number, title, description, color, children, default
   );
 }
 
-export function SessionPreview({ form, phase, videos, onBack }) {
+export function SessionPreview({ form, phase, videos = [], onBack }) {
   const phaseColor = PHASE_COLORS[phase?.code] || "#888";
   const statusCfg = getStatusConfig(form.status);
   const theme = statusCfg.preview || {
@@ -53,7 +54,10 @@ export function SessionPreview({ form, phase, videos, onBack }) {
           <button className="btn-back" onClick={onBack}>
             <IconArrowLeft size={16} /> Volver al editor
           </button>
-          <span className="pv-badge">Vista previa</span>
+          <div className="pv-toolbar__actions">
+            <DownloadPdfButton session={form} phase={phase} videos={videos} />
+            <span className="pv-badge">Vista previa</span>
+          </div>
         </div>
 
         <div

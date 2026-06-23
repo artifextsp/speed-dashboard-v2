@@ -7,6 +7,7 @@ import {
   IconPencil,
   IconSettings,
   IconTrash,
+  IconDownload,
 } from "@tabler/icons-react";
 import {
   PHASE_COLORS,
@@ -35,7 +36,9 @@ export function SessionRow({
   onClick,
   onEditMeta,
   onDelete,
+  onDownloadPdf,
   readOnly,
+  canDownloadPdf = false,
 }) {
   const color = PHASE_COLORS[phase?.code] || "#888";
   const Icon = TYPE_ICON_MAP[session.session_type] || IconFile;
@@ -114,6 +117,19 @@ export function SessionRow({
 
       {!readOnly && (
         <div className="session-row__actions">
+          {canDownloadPdf && (
+            <button
+              type="button"
+              className="btn-icon session-row__action"
+              title="Descargar PDF"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDownloadPdf?.(session);
+              }}
+            >
+              <IconDownload size={16} />
+            </button>
+          )}
           <button
             type="button"
             className="btn-icon session-row__action"
@@ -135,6 +151,21 @@ export function SessionRow({
             }}
           >
             <IconTrash size={16} />
+          </button>
+        </div>
+      )}
+      {readOnly && canDownloadPdf && (
+        <div className="session-row__actions">
+          <button
+            type="button"
+            className="btn-icon session-row__action"
+            title="Descargar PDF"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDownloadPdf?.(session);
+            }}
+          >
+            <IconDownload size={16} />
           </button>
         </div>
       )}

@@ -21,6 +21,7 @@ export function DashboardView({
   onCreateSession,
   onUpdateSessionMetadata,
   onDeleteSession,
+  onDownloadPdf,
 }) {
   const [selectedPhase, setSelectedPhase] = useState(null);
   const [showChangePassword, setShowChangePassword] = useState(false);
@@ -169,6 +170,8 @@ export function DashboardView({
               setMetaModal({ mode: "edit", session })
             }
             onDelete={handleDelete}
+            onDownloadPdf={onDownloadPdf}
+            canDownloadPdf={permissions.canDownloadPdf}
             readOnly={permissions.readOnly}
           />
         ))}

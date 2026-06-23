@@ -7,6 +7,7 @@ import { FieldArea } from "./fields/FieldArea";
 import { ComponentsEditor } from "./fields/ComponentsEditor";
 import { ClassStatusControl } from "./fields/ClassStatusControl";
 import { SessionPreview } from "../preview/SessionPreview";
+import { DownloadPdfButton } from "../export/DownloadPdfButton";
 
 export function SessionEditor({
   session,
@@ -38,6 +39,7 @@ export function SessionEditor({
       <SessionPreview
         form={previewForm}
         phase={phase}
+        videos={initialVideos}
         onBack={() => setShowPreview(false)}
       />
     );
@@ -50,6 +52,11 @@ export function SessionEditor({
           <IconArrowLeft size={16} /> Volver
         </button>
         <div className="editor__toolbar-right">
+          <DownloadPdfButton
+            session={previewForm}
+            phase={phase}
+            videos={initialVideos}
+          />
           <button
             className="btn btn--secondary"
             onClick={() => setShowPreview(true)}

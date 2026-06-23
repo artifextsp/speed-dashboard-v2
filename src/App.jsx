@@ -7,6 +7,7 @@ import { DashboardView } from "./components/dashboard/DashboardView";
 import { SessionEditor } from "./components/editor/SessionEditor";
 import { Toast } from "./components/ui/Toast";
 import { getClassPermissions } from "./kernel/permissions";
+import { downloadSessionPdf } from "./utils/sessionPdfExporter";
 
 export default function App() {
   const { user, loading: authLoading, signIn, signUp, signOut, changePassword } = useAuth();
@@ -75,6 +76,20 @@ export default function App() {
     }
   };
 
+  const handleDownloadPdf = useCallback(
+    async (session) => {
+      try {
+        const phase = phases.find((p) => p.id === session.phase_id);
+        const videos = await getVideos(session.id);
+        const filename = await downloadSessionPdf(session, phase, videos);
+        showToast(`PDF descargado: ${filename}`);
+      } catch (err) {
+        showToast(err.message || "Error al generar el PDF", true);
+      }
+    },
+    [phases, getVideos, showToast]
+  );
+
   if (authLoading) {
     return <div className="loading-screen">Cargando...</div>;
   }
@@ -133,6 +148,7 @@ export default function App() {
             updateSessionMetadata(data, user?.email)
           }
           onDeleteSession={(id) => deleteSession(id, user?.email)}
+          onDownloadPdf={handleDownloadPdf}
         />
       ) : null}
     </div>
