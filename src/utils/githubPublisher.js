@@ -33,17 +33,21 @@ async function ghFetch(path, token, options = {}) {
   return data;
 }
 
-async function createBlob(content, token, owner, repo) {
+async function createBlob(content, token, owner, repo, encoding = "utf-8") {
   return ghFetch(`/repos/${owner}/${repo}/git/blobs`, token, {
     method: "POST",
-    body: JSON.stringify({ content, encoding: "utf-8" }),
+    body: JSON.stringify({ content, encoding }),
   });
 }
 
 async function buildTreeEntries(files, token, owner, repo) {
   const treeEntries = [];
-  for (const [path, content] of Object.entries(files)) {
-    const blob = await createBlob(content, token, owner, repo);
+  for (const [path, entry] of Object.entries(files)) {
+    const isBinary =
+      entry && typeof entry === "object" && entry.encoding === "base64";
+    const content = isBinary ? entry.content : entry;
+    const encoding = isBinary ? "base64" : "utf-8";
+    const blob = await createBlob(content, token, owner, repo, encoding);
     treeEntries.push({
       path,
       mode: "100644",

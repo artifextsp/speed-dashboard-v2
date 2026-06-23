@@ -7,6 +7,7 @@ import {
   canStudentAccessSession,
 } from "../kernel/statusManager";
 import { sortSessionsByDate } from "../kernel/sortByDate";
+import { slugifyFilename } from "../kernel/markdownToPdfBlocks";
 import { markdownToHtml } from "./markdownToHtml";
 
 function escapeHtml(value) {
@@ -19,6 +20,17 @@ function escapeHtml(value) {
 
 function sessionPagePath(sessionId) {
   return `sesiones/${sessionId}.html`;
+}
+
+function sessionPdfPath(sessionId) {
+  return `sesiones/${sessionId}.pdf`;
+}
+
+function sessionPdfDownloadName(session) {
+  const prefix = session.session_number
+    ? `sesion-${session.session_number}`
+    : "clase";
+  return `${prefix}-${slugifyFilename(session.title)}.pdf`;
 }
 
 function renderStatusPill(status) {
@@ -86,6 +98,8 @@ function renderSessionPage(session, phase) {
       </div>`
     : "";
 
+  const pdfName = sessionPdfDownloadName(session);
+
   return `<!DOCTYPE html>
 <html lang="es">
 <head>
@@ -97,7 +111,12 @@ function renderSessionPage(session, phase) {
 <body>
   <div class="pv-wrapper">
     <div class="pv-container">
-      <nav class="site-nav"><a href="../index.html">← Volver al índice del curso</a></nav>
+      <nav class="site-nav site-nav--bar">
+        <a href="../index.html" class="site-nav__back">← Volver al índice del curso</a>
+        <a class="site-pdf-btn" href="${session.id}.pdf" download="${escapeHtml(pdfName)}">
+          ↓ Descargar síntesis (PDF)
+        </a>
+      </nav>
 
       <div class="pv-hero pv-hero--by-status" data-status="${session.status}"
         style="background:${theme.bg};border-color:${statusCfg.border};border-left-color:${statusCfg.border}">
@@ -232,9 +251,12 @@ function renderIndexPage(phases, allSessions) {
 /**
  * Genera el sitio público estático.
  * - Índice: TODAS las sesiones con su estado (3 colores).
- * - Páginas de detalle: solo En desarrollo y Dictada (acceso estudiante).
+ * - Páginas de detalle + PDF: solo En desarrollo y Dictada (acceso estudiante).
  */
-export function generateSiteFiles(phases, sessions) {
+export async function generateSiteFiles(phases, sessions, options = {}) {
+  const { videosBySessionId = {} } = options;
+  const { generateSessionPdfBase64 } = await import("./sessionPdfExporter.jsx");
+
   const allSessions = sortSessionsByDate(sessions);
   const accessible = allSessions.filter((s) => canStudentAccessSession(s.status));
 
@@ -246,6 +268,13 @@ export function generateSiteFiles(phases, sessions) {
   for (const session of accessible) {
     const phase = phases.find((p) => p.id === session.phase_id);
     files[sessionPagePath(session.id)] = renderSessionPage(session, phase);
+
+    const videos = videosBySessionId[session.id] || [];
+    const pdfBase64 = await generateSessionPdfBase64(session, phase, videos);
+    files[sessionPdfPath(session.id)] = {
+      encoding: "base64",
+      content: pdfBase64,
+    };
   }
 
   return {
@@ -254,6 +283,7 @@ export function generateSiteFiles(phases, sessions) {
       totalCount: allSessions.length,
       accessibleCount: accessible.length,
       lockedCount: allSessions.length - accessible.length,
+      pdfCount: accessible.length,
       totalFiles: Object.keys(files).length,
     },
   };

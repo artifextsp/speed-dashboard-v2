@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { IconWorldUpload } from "@tabler/icons-react";
 import { generateSiteFiles, getAccessibleSessions } from "../../utils/siteGenerator";
+import { fetchSessionVideosMap } from "../../utils/fetchSessionVideosMap";
 import {
   getGitHubConfig,
   publishToGitHub,
@@ -29,20 +30,26 @@ export function PublishButton({ phases, sessions, onResult }) {
       `Se publicará el temario completo (${sessions.length} clases) al sitio GitHub Pages.\n\n` +
         `• Estudiantes VERÁN las 3 estados (Planeada, En desarrollo, Dictada)\n` +
         `• Solo podrán ENTRAR a ${accessible.length} clase(s) en desarrollo o dictadas\n` +
-        `• Las planeada(s) aparecerán bloqueadas\n\n` +
+        `• Las planeada(s) aparecerán bloqueadas\n` +
+        `• Se generará un PDF por cada clase accesible\n\n` +
         `Destino: ${config.owner}/${config.repo}\n\n¿Continuar?`
     );
     if (!confirmed) return;
 
     setPublishing(true);
     try {
-      const { files, stats } = generateSiteFiles(phases, sessions);
+      const videosBySessionId = await fetchSessionVideosMap(
+        accessible.map((s) => s.id)
+      );
+      const { files, stats } = await generateSiteFiles(phases, sessions, {
+        videosBySessionId,
+      });
       const result = await publishToGitHub(files);
 
       onResult?.(
         result.initialized
-          ? `Repo inicializado (rama main). ${stats.totalCount} clases en el índice, ${stats.accessibleCount} accesibles. Activa GitHub Pages → branch main.`
-          : `Sitio actualizado: ${stats.totalCount} clases listadas, ${stats.accessibleCount} con acceso, ${stats.lockedCount} planeada(s) bloqueada(s).`,
+          ? `Repo inicializado (rama main). ${stats.totalCount} clases en el índice, ${stats.accessibleCount} accesibles, ${stats.pdfCount} PDF(s). Activa GitHub Pages → branch main.`
+          : `Sitio actualizado: ${stats.totalCount} clases listadas, ${stats.accessibleCount} con acceso, ${stats.pdfCount} PDF(s), ${stats.lockedCount} planeada(s) bloqueada(s).`,
         false,
         result
       );

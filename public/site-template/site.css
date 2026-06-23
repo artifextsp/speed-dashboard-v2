@@ -61,6 +61,14 @@ a { color: #534AB7; }
 
 .site-nav { margin-bottom: 16px; }
 
+.site-nav--bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
 .site-nav a {
   font-size: 14px;
   font-weight: 600;
@@ -68,6 +76,30 @@ a { color: #534AB7; }
 }
 
 .site-nav a:hover { text-decoration: underline; }
+
+.site-nav__back {
+  color: #534AB7;
+}
+
+.site-pdf-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid #534AB7;
+  background: #EEEDFE;
+  color: #534AB7 !important;
+  font-size: 13px !important;
+  text-decoration: none !important;
+  white-space: nowrap;
+}
+
+.site-pdf-btn:hover {
+  background: #534AB7;
+  color: #fff !important;
+  text-decoration: none !important;
+}
 
 .site-phase {
   margin-bottom: 28px;
