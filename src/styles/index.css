@@ -1677,6 +1677,20 @@ body {
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
 }
 
+.markdown-video-link {
+  text-align: center;
+  margin: -8px auto 20px;
+  max-width: 720px;
+  padding: 0 24px;
+  font-size: 14px;
+}
+
+.markdown-video-link a {
+  color: #D85A30;
+  font-weight: 600;
+  text-decoration: underline;
+}
+
 .pv-markdown > iframe,
 .pv-markdown iframe,
 .rich-editor .w-md-editor-preview iframe {

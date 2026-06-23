@@ -10,7 +10,7 @@ import { sortSessionsByDate } from "../kernel/sortByDate";
 import { slugifyFilename } from "../kernel/markdownToPdfBlocks";
 import { markdownToHtml } from "./markdownToHtml";
 
-const SITE_BUILD_VERSION = "2026-06-23-pdf-v2";
+const SITE_BUILD_VERSION = "2026-06-23-pdf-v3";
 
 function escapeHtml(value) {
   return String(value ?? "")

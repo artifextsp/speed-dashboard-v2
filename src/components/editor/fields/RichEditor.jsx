@@ -5,6 +5,7 @@ import {
   extractYouTubeId,
   normalizeUrl,
   youtubeEmbedUrl,
+  youtubeWatchUrl,
 } from "../../../kernel/urlUtils";
 import {
   IconAlignLeft,
@@ -70,7 +71,7 @@ const youtubeCommand = {
       return;
     }
     api.replaceSelection(
-      `\n\n<div class="markdown-embed markdown-embed--video"><iframe src="${youtubeEmbedUrl(id)}" title="Video" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>\n\n`
+      `\n\n<div class="markdown-embed markdown-embed--video"><iframe src="${youtubeEmbedUrl(id)}" title="Video" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>\n<p class="markdown-video-link"><a href="${youtubeWatchUrl(id)}">▶ Abrir video en YouTube</a></p>\n\n`
     );
   },
 };
@@ -149,11 +150,23 @@ export function RichEditor({ label, value, onChange, help, height = 320, readOnl
                 {children}
               </a>
             ),
-            iframe: ({ src, title, ...props }) => (
-              <div className="markdown-embed markdown-embed--video">
-                <iframe src={src} title={title || "Video"} {...props} />
-              </div>
-            ),
+            iframe: ({ src, title, ...props }) => {
+              const ytId = extractYouTubeId(src || "");
+              return (
+                <>
+                  <div className="markdown-embed markdown-embed--video">
+                    <iframe src={src} title={title || "Video"} {...props} />
+                  </div>
+                  {ytId ? (
+                    <p className="markdown-video-link">
+                      <a href={youtubeWatchUrl(ytId)} target="_blank" rel="noopener noreferrer">
+                        ▶ Abrir video en YouTube
+                      </a>
+                    </p>
+                  ) : null}
+                </>
+              );
+            },
           },
         }}
       />

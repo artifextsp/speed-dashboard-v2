@@ -1,4 +1,5 @@
 import { marked } from "marked";
+import { friendlyLinkLabel } from "../utils/enrichContentHtml";
 import { normalizeUrl, extractYouTubeId, youtubeWatchUrl } from "./urlUtils";
 
 function parseInline(tokens) {
@@ -27,17 +28,18 @@ function parseInline(tokens) {
         break;
       case "link": {
         const href = normalizeUrl(token.href);
+        const label = friendlyLinkLabel(token.text, href);
         const ytId = extractYouTubeId(href);
         if (ytId) {
           parts.push({
             type: "video",
-            text: token.text?.trim() || "Ver video en YouTube",
+            text: label || "Ver video en YouTube",
             url: youtubeWatchUrl(ytId),
           });
         } else {
           parts.push({
             type: "link",
-            text: token.text?.trim() || href,
+            text: label,
             href,
           });
         }
@@ -93,7 +95,23 @@ function parseHtml(html) {
   const linkRe = /<a[^>]+href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
   while ((match = linkRe.exec(html)) !== null) {
     const href = normalizeUrl(match[1]);
-    const text = match[2].replace(/<[^>]+>/g, "").trim() || href;
+    const rawText = match[2].replace(/<[^>]+>/g, "").trim();
+    const text = friendlyLinkLabel(rawText, href);
+    const ytId = extractYouTubeId(href);
+    if (ytId) {
+      blocks.push({ type: "video", text, url: youtubeWatchUrl(ytId) });
+    } else {
+      blocks.push({
+        type: "paragraph",
+        parts: [{ type: "link", text, href }],
+      });
+    }
+  }
+
+  const mdLinkRe = /\[([^\]]+)\]\(([^)]+)\)/g;
+  while ((match = mdLinkRe.exec(html)) !== null) {
+    const href = normalizeUrl(match[2].trim());
+    const text = friendlyLinkLabel(match[1].trim(), href);
     const ytId = extractYouTubeId(href);
     if (ytId) {
       blocks.push({ type: "video", text, url: youtubeWatchUrl(ytId) });
