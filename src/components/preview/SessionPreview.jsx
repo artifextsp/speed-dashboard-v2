@@ -116,14 +116,14 @@ export function SessionPreview({ form, phase, videos, onBack }) {
           {components.length === 0 ? (
             <p className="pv-empty">Esta clase aún no tiene componentes definidos.</p>
           ) : (
-            components.map((comp, index) => (
+            components.map((comp) => (
               <AccordionSection
                 key={comp.id}
                 number={comp.displayNumber}
                 title={comp.name || `Componente ${comp.displayNumber}`}
                 description={comp.description}
                 color={phaseColor}
-                defaultOpen={index === 0}
+                defaultOpen={false}
               >
                 <div className="pv-markdown">
                   <MarkdownContent>{comp.content}</MarkdownContent>

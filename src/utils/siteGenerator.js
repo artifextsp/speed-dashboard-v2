@@ -36,15 +36,14 @@ function renderComponentsHtml(session, phaseColor) {
   }
 
   return components
-    .map((comp, index) => {
-      const open = index === 0 ? " open" : "";
+    .map((comp) => {
       const title = escapeHtml(comp.name || `Componente ${comp.displayNumber}`);
       const desc = comp.description
         ? `<p class="pv-card__desc">${escapeHtml(comp.description)}</p>`
         : "";
       const content = markdownToHtml(comp.content);
 
-      return `<details class="pv-card"${open}>
+      return `<details class="pv-card">
         <summary>
           <span class="pv-card__number" style="background:${phaseColor}">${comp.displayNumber}</span>
           <div class="pv-card__header-text">
