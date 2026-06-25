@@ -49,7 +49,7 @@ export function PublishButton({ phases, sessions, onResult }) {
       onResult?.(
         result.initialized
           ? `Repo inicializado (rama main). ${stats.totalCount} clases en el índice, ${stats.accessibleCount} accesibles, ${stats.pdfCount} PDF(s). Activa GitHub Pages → branch main.`
-          : `Sitio actualizado: ${stats.totalCount} clases listadas, ${stats.accessibleCount} con acceso, ${stats.pdfCount} PDF(s), ${stats.lockedCount} planeada(s) bloqueada(s). Espera 1–2 min y recarga proyectospeed.com con Cmd+Shift+R. Busca en el código fuente: SPEED build: 2026-06-23-pdf-v3`,
+          : `Sitio actualizado: ${stats.totalCount} clases listadas, ${stats.accessibleCount} con acceso, ${stats.pdfCount} PDF(s), ${stats.lockedCount} planeada(s) bloqueada(s). Espera 1–2 min y recarga proyectospeed.com con Cmd+Shift+R. Busca en el código fuente: SPEED build: 2026-06-24-pdf-v4`,
         false,
         result
       );

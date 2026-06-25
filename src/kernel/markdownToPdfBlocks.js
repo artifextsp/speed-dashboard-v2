@@ -1,6 +1,43 @@
 import { marked } from "marked";
-import { friendlyLinkLabel } from "../utils/enrichContentHtml";
+import { friendlyLinkLabel } from "../utils/enrichContentHtml.js";
 import { normalizeUrl, extractYouTubeId, youtubeWatchUrl } from "./urlUtils";
+
+const MD_LINK_IN_TEXT_RE = /\[([^\]]+)\]\(([^)]+)\)/g;
+
+function parseMarkdownLinksInPlainText(text) {
+  if (!text?.includes("](")) {
+    return [{ type: "text", text: text || "" }];
+  }
+
+  const parts = [];
+  let lastIndex = 0;
+
+  for (const match of text.matchAll(MD_LINK_IN_TEXT_RE)) {
+    const [raw, label, url] = match;
+    if (match.index > lastIndex) {
+      parts.push({ type: "text", text: text.slice(lastIndex, match.index) });
+    }
+    const href = normalizeUrl(url.trim());
+    const linkLabel = friendlyLinkLabel(label.trim(), href);
+    const ytId = extractYouTubeId(href);
+    if (ytId) {
+      parts.push({
+        type: "video",
+        text: linkLabel || "Ver video en YouTube",
+        url: youtubeWatchUrl(ytId),
+      });
+    } else {
+      parts.push({ type: "link", text: linkLabel, href });
+    }
+    lastIndex = match.index + raw.length;
+  }
+
+  if (lastIndex < text.length) {
+    parts.push({ type: "text", text: text.slice(lastIndex) });
+  }
+
+  return parts.length ? parts : [{ type: "text", text }];
+}
 
 function parseInline(tokens) {
   if (!tokens?.length) return [];
@@ -9,7 +46,11 @@ function parseInline(tokens) {
   for (const token of tokens) {
     switch (token.type) {
       case "text":
-        parts.push({ type: "text", text: token.text });
+        if (token.tokens?.length) {
+          parts.push(...parseInline(token.tokens));
+        } else {
+          parts.push(...parseMarkdownLinksInPlainText(token.text));
+        }
         break;
       case "strong":
         parts.push(
@@ -181,6 +222,15 @@ export function markdownToPdfBlocks(markdown) {
       case "html":
         blocks.push(...parseHtml(token.raw || token.text || ""));
         break;
+      case "table": {
+        const rows = (token.rows || []).flatMap((row) =>
+          row.flatMap((cell) => parseInline(cell.tokens))
+        );
+        if (rows.length) {
+          blocks.push({ type: "paragraph", parts: rows });
+        }
+        break;
+      }
       case "space":
         break;
       default:

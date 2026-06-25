@@ -59,6 +59,17 @@ a { color: #534AB7; }
   margin-top: 6px;
 }
 
+.site-header__pdf-hint {
+  margin-top: 14px;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  background: #EEEDFE;
+  border: 1px solid #534AB7;
+  color: #3d3785;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
 .site-nav { margin-bottom: 16px; }
 
 .site-nav--bar {
@@ -110,6 +121,11 @@ a { color: #534AB7; }
 .site-pdf-btn--card {
   font-size: 12px !important;
   padding: 6px 12px;
+}
+
+.site-pdf-btn--nav {
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(83, 74, 183, 0.2);
 }
 
 .site-session-card-wrap {

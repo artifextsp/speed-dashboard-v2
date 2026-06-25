@@ -10,7 +10,7 @@ import { sortSessionsByDate } from "../kernel/sortByDate";
 import { slugifyFilename } from "../kernel/markdownToPdfBlocks";
 import { markdownToHtml } from "./markdownToHtml";
 
-const SITE_BUILD_VERSION = "2026-06-23-pdf-v3";
+const SITE_BUILD_VERSION = "2026-06-24-pdf-v4";
 
 function escapeHtml(value) {
   return String(value ?? "")
@@ -116,8 +116,8 @@ function renderSessionPage(session, phase) {
     <div class="pv-container">
       <nav class="site-nav site-nav--bar">
         <a href="../index.html" class="site-nav__back">← Volver al índice del curso</a>
-        <a class="site-pdf-btn" href="${session.id}.pdf" download="${escapeHtml(pdfName)}">
-          ↓ Descargar síntesis (PDF)
+        <a class="site-pdf-btn site-pdf-btn--nav" href="${session.id}.pdf" download="${escapeHtml(pdfName)}">
+          ↓ Descargar plan de clase (PDF)
         </a>
       </nav>
 
@@ -143,7 +143,7 @@ function renderSessionPage(session, phase) {
           </div>
           <div class="pv-hero__pdf">
             <a class="site-pdf-btn site-pdf-btn--hero" href="${session.id}.pdf" download="${escapeHtml(pdfName)}">
-              ↓ Descargar síntesis completa (PDF)
+              ↓ Descargar plan de clase (PDF con enlaces)
             </a>
           </div>
         </div>
@@ -185,7 +185,7 @@ function renderIndexSessionItem(session) {
         </a>
         <div class="site-session-card__pdf">
           <a class="site-pdf-btn site-pdf-btn--card" href="${sessionPdfPath(session.id)}" download="${escapeHtml(pdfName)}">
-            ↓ Descargar PDF
+            ↓ Descargar plan de clase (PDF)
           </a>
         </div>
       </div>
@@ -254,6 +254,7 @@ function renderIndexPage(phases, allSessions) {
         <div class="site-header__brand">SPEED</div>
         <p class="site-header__sub">Piloto de robótica educativa · Uniminuto 2026</p>
         <p class="site-header__sub">Guía de clases para docentes participantes</p>
+        <p class="site-header__pdf-hint">Las clases en <strong>En desarrollo</strong> o <strong>Dictada</strong> incluyen el plan en PDF con enlaces a videos y recursos.</p>
       </header>
       ${legend}
       ${phaseSections}
