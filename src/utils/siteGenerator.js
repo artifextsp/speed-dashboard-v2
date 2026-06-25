@@ -12,7 +12,7 @@ import { markdownToHtml } from "./markdownToHtml";
 import { generateSessionPdfBase64 } from "./sessionPdfExporter.jsx";
 import { loadSiteAssetFiles, SITE_LOGO_PATHS } from "./siteAssets.js";
 
-const SITE_BUILD_VERSION = "2026-06-24-pdf-v11";
+const SITE_BUILD_VERSION = "2026-06-24-pdf-v12";
 
 export { SITE_BUILD_VERSION };
 

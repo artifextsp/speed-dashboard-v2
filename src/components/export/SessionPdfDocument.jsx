@@ -33,7 +33,7 @@ const styles = StyleSheet.create({
   instHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
+    alignItems: "flex-start",
     marginBottom: 20,
     paddingBottom: 14,
     borderBottomWidth: 1,
@@ -42,19 +42,24 @@ const styles = StyleSheet.create({
   instHeaderText: {
     flex: 1,
     paddingRight: 16,
+    flexDirection: "column",
   },
   speedBrand: {
     fontSize: 26,
     fontWeight: 700,
     color: SPEED_ORANGE,
     letterSpacing: -0.5,
-    marginBottom: 4,
+    lineHeight: 1.2,
+  },
+  speedBrandSpacer: {
+    height: 6,
   },
   speedTagline: {
     fontSize: 9.5,
     fontStyle: "italic",
     color: "#9ca3af",
-    lineHeight: 1.4,
+    lineHeight: 1.5,
+    marginTop: 2,
   },
   instHeaderLogos: {
     flexDirection: "row",
@@ -472,6 +477,7 @@ export function SessionPdfDocument({ session, phase, videos = [] }) {
         <View style={styles.instHeader}>
           <View style={styles.instHeaderText}>
             <Text style={styles.speedBrand}>SPEED</Text>
+            <View style={styles.speedBrandSpacer} />
             <Text style={styles.speedTagline}>
               Robótica educativa para docentes usando metodologías ABP.
             </Text>
