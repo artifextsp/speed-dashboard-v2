@@ -1,5 +1,6 @@
 import logoBogotaUrl from "../../public/site-template/assets/logo-bogota-educacion.png";
 import logoUniminutoUrl from "../../public/site-template/assets/logo-uniminuto.png";
+import logoUniminutoPdfUrl from "../../public/site-template/assets/logo-uniminuto-pdf.png";
 
 async function blobToBase64(blob) {
   return new Promise((resolve, reject) => {
@@ -25,9 +26,10 @@ async function fetchAssetBase64(url) {
 
 /** Archivos binarios del sitio público para publicar en GitHub. */
 export async function loadSiteAssetFiles() {
-  const [bogota, uniminuto] = await Promise.all([
+  const [bogota, uniminuto, uniminutoPdf] = await Promise.all([
     fetchAssetBase64(logoBogotaUrl),
     fetchAssetBase64(logoUniminutoUrl),
+    fetchAssetBase64(logoUniminutoPdfUrl),
   ]);
 
   return {
@@ -38,6 +40,10 @@ export async function loadSiteAssetFiles() {
     "assets/logo-uniminuto.png": {
       encoding: "base64",
       content: uniminuto,
+    },
+    "assets/logo-uniminuto-pdf.png": {
+      encoding: "base64",
+      content: uniminutoPdf,
     },
   };
 }
@@ -50,5 +56,5 @@ export const SITE_LOGO_PATHS = {
 /** URLs empaquetadas para @react-pdf/renderer (Image). */
 export const PDF_LOGO_SOURCES = {
   bogota: logoBogotaUrl,
-  uniminuto: logoUniminutoUrl,
+  uniminuto: logoUniminutoPdfUrl,
 };
