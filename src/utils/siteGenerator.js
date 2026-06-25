@@ -12,7 +12,7 @@ import { markdownToHtml } from "./markdownToHtml";
 import { generateSessionPdfBase64 } from "./sessionPdfExporter.jsx";
 import { loadSiteAssetFiles, SITE_LOGO_PATHS } from "./siteAssets.js";
 
-const SITE_BUILD_VERSION = "2026-06-24-pdf-v7";
+const SITE_BUILD_VERSION = "2026-06-24-pdf-v8";
 
 export { SITE_BUILD_VERSION };
 
@@ -87,8 +87,7 @@ function renderSiteHeader() {
     <div class="site-header__bar">
       <div class="site-header__titles">
         <div class="site-header__brand">SPEED</div>
-        <p class="site-header__sub">Piloto de robótica educativa · Uniminuto 2026</p>
-        <p class="site-header__sub">Guía de clases para docentes participantes</p>
+        <p class="site-header__tagline">Robótica educativa para docentes usando metodologías ABP.</p>
       </div>
       <div class="site-header__logos">
         <img src="${SITE_LOGO_PATHS.uniminuto}" alt="Corporación Universitaria Uniminuto" class="site-header__logo site-header__logo--uniminuto" />
@@ -234,13 +233,15 @@ function renderIndexSessionItem(session) {
       <div class="site-session-card-wrap" style="border-left-color:${statusCfg.border}">
         <div class="site-session-card__main">
           <a class="site-session-card__link" href="${sessionPagePath(session.id)}">
-            <div class="site-session-card__head">
-              <strong class="site-session-card__title">${escapeHtml(label)}</strong>
+            <strong class="site-session-card__title">${escapeHtml(label)}</strong>
+            <div class="site-session-card__meta-row">
+              <span class="site-session-list__meta">${escapeHtml(meta)}</span>
               ${pill}
             </div>
-            <div class="site-session-list__meta">${escapeHtml(meta)}</div>
           </a>
-          ${renderPdfIconButton(sessionPdfPath(session.id), pdfName, "site-pdf-icon-btn--nav")}
+          <div class="site-session-card__pdf-slot">
+            ${renderPdfIconButton(sessionPdfPath(session.id), pdfName, "site-pdf-icon-btn--nav")}
+          </div>
         </div>
       </div>
     </li>`;

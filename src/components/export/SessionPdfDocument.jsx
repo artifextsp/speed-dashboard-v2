@@ -4,6 +4,7 @@ import {
   Text,
   View,
   Link,
+  Image,
   StyleSheet,
 } from "@react-pdf/renderer";
 import { MODALITY_LABELS, PHASE_COLORS } from "../../utils/constants";
@@ -14,10 +15,13 @@ import {
   markdownToPdfBlocks,
   collectPdfResources,
 } from "../../kernel/markdownToPdfBlocks";
+import { PDF_LOGO_SOURCES } from "../../utils/siteAssets.js";
+
+const SPEED_ORANGE = "#D85A30";
 
 const styles = StyleSheet.create({
   page: {
-    paddingTop: 52,
+    paddingTop: 44,
     paddingBottom: 64,
     paddingHorizontal: 56,
     fontFamily: "Helvetica",
@@ -26,16 +30,58 @@ const styles = StyleSheet.create({
     color: "#2a2a2a",
     backgroundColor: "#ffffff",
   },
+  instHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
+    paddingBottom: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ececf0",
+  },
+  instHeaderText: {
+    flex: 1,
+    paddingRight: 16,
+  },
+  speedBrand: {
+    fontSize: 26,
+    fontWeight: 700,
+    color: SPEED_ORANGE,
+    letterSpacing: -0.5,
+    marginBottom: 4,
+  },
+  speedTagline: {
+    fontSize: 9.5,
+    fontStyle: "italic",
+    color: "#9ca3af",
+    lineHeight: 1.4,
+  },
+  instHeaderLogos: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  logoUniminuto: {
+    width: 42,
+    height: 42,
+    objectFit: "cover",
+    objectPosition: "top",
+  },
+  logoBogota: {
+    width: 110,
+    height: 36,
+    objectFit: "contain",
+  },
   topRule: {
     height: 3,
-    backgroundColor: "#534AB7",
-    marginBottom: 28,
+    backgroundColor: SPEED_ORANGE,
+    marginBottom: 16,
     borderRadius: 2,
   },
   headerBrand: {
     fontSize: 8,
     letterSpacing: 2.5,
-    color: "#534AB7",
+    color: "#888",
     fontWeight: 700,
     marginBottom: 6,
     textTransform: "uppercase",
@@ -84,7 +130,7 @@ const styles = StyleSheet.create({
   goalLabel: {
     fontSize: 8,
     fontWeight: 700,
-    color: "#534AB7",
+    color: SPEED_ORANGE,
     marginBottom: 6,
     textTransform: "uppercase",
     letterSpacing: 1,
@@ -424,7 +470,18 @@ export function SessionPdfDocument({ session, phase, videos = [] }) {
     >
       <Page size="A4" style={styles.page}>
         <View style={styles.topRule} />
-        <Text style={styles.headerBrand}>SPEED · Proyecto SPEED</Text>
+        <View style={styles.instHeader}>
+          <View style={styles.instHeaderText}>
+            <Text style={styles.speedBrand}>SPEED</Text>
+            <Text style={styles.speedTagline}>
+              Robótica educativa para docentes usando metodologías ABP.
+            </Text>
+          </View>
+          <View style={styles.instHeaderLogos}>
+            <Image src={PDF_LOGO_SOURCES.uniminuto} style={styles.logoUniminuto} />
+            <Image src={PDF_LOGO_SOURCES.bogota} style={styles.logoBogota} />
+          </View>
+        </View>
         <Text style={styles.phaseTag}>
           Fase {phase?.code} — {phase?.title}
         </Text>

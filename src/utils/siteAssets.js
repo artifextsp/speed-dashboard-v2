@@ -46,3 +46,9 @@ export const SITE_LOGO_PATHS = {
   bogota: "assets/logo-bogota-educacion.png",
   uniminuto: "assets/logo-uniminuto.png",
 };
+
+/** URLs empaquetadas para @react-pdf/renderer (Image). */
+export const PDF_LOGO_SOURCES = {
+  bogota: logoBogotaUrl,
+  uniminuto: logoUniminutoUrl,
+};
