@@ -62,10 +62,9 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   logoUniminuto: {
-    width: 42,
-    height: 42,
-    objectFit: "cover",
-    objectPosition: "top",
+    width: 118,
+    height: 32,
+    objectFit: "contain",
   },
   logoBogota: {
     width: 110,
