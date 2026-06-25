@@ -96,8 +96,8 @@ a { color: #534AB7; }
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
   border-radius: 8px;
   border: 1px solid #d8d6f0;
   background: #fff;
@@ -111,15 +111,17 @@ a { color: #534AB7; }
   background: #EEEDFE;
   border-color: #534AB7;
   color: #3d3785;
+  text-decoration: none !important;
 }
 
 .site-pdf-icon-btn--nav {
-  width: 36px;
-  height: 36px;
+  /* Misma medida en índice y página de clase */
 }
 
 .site-pdf-icon {
   display: block;
+  width: 18px;
+  height: 18px;
 }
 
 .site-session-card-wrap {
@@ -132,10 +134,10 @@ a { color: #534AB7; }
 
 .site-session-card__main {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  padding: 16px 20px 16px 22px;
+  gap: 14px;
+  padding: 16px 18px 16px 22px;
 }
 
 .site-session-card__link {
@@ -143,26 +145,27 @@ a { color: #534AB7; }
   min-width: 0;
   text-decoration: none;
   color: var(--color-text-primary);
-  padding-right: 8px;
 }
 
 .site-session-card__link:hover .site-session-card__title {
   color: #534AB7;
 }
 
-.site-session-card__title {
-  display: block;
-  font-size: 15px;
-  line-height: 1.35;
+.site-session-card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
   margin-bottom: 4px;
 }
 
-.site-session-card__actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-shrink: 0;
-  padding-top: 2px;
+.site-session-card__title {
+  display: block;
+  flex: 1;
+  min-width: 0;
+  font-size: 15px;
+  line-height: 1.35;
 }
 
 .site-session-card-wrap .site-session-card {

@@ -10,7 +10,7 @@ import { sortSessionsByDate } from "../kernel/sortByDate";
 import { slugifyFilename } from "../kernel/markdownToPdfBlocks";
 import { markdownToHtml } from "./markdownToHtml";
 
-const SITE_BUILD_VERSION = "2026-06-24-pdf-v5";
+const SITE_BUILD_VERSION = "2026-06-24-pdf-v6";
 
 export { SITE_BUILD_VERSION };
 
@@ -179,13 +179,13 @@ function renderIndexSessionItem(session) {
       <div class="site-session-card-wrap" style="border-left-color:${statusCfg.border}">
         <div class="site-session-card__main">
           <a class="site-session-card__link" href="${sessionPagePath(session.id)}">
-            <strong class="site-session-card__title">${escapeHtml(label)}</strong>
+            <div class="site-session-card__head">
+              <strong class="site-session-card__title">${escapeHtml(label)}</strong>
+              ${pill}
+            </div>
             <div class="site-session-list__meta">${escapeHtml(meta)}</div>
           </a>
-          <div class="site-session-card__actions">
-            ${pill}
-            ${renderPdfIconButton(sessionPdfPath(session.id), pdfName)}
-          </div>
+          ${renderPdfIconButton(sessionPdfPath(session.id), pdfName, "site-pdf-icon-btn--nav")}
         </div>
       </div>
     </li>`;
