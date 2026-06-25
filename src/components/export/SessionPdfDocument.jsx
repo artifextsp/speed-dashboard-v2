@@ -17,147 +17,166 @@ import {
 
 const styles = StyleSheet.create({
   page: {
-    paddingTop: 48,
-    paddingBottom: 56,
-    paddingHorizontal: 48,
+    paddingTop: 52,
+    paddingBottom: 64,
+    paddingHorizontal: 56,
     fontFamily: "Helvetica",
-    fontSize: 10.5,
-    lineHeight: 1.55,
-    color: "#1a1a1a",
+    fontSize: 10,
+    lineHeight: 1.65,
+    color: "#2a2a2a",
+    backgroundColor: "#ffffff",
+  },
+  topRule: {
+    height: 3,
+    backgroundColor: "#534AB7",
+    marginBottom: 28,
+    borderRadius: 2,
   },
   headerBrand: {
-    fontSize: 9,
-    letterSpacing: 2,
+    fontSize: 8,
+    letterSpacing: 2.5,
     color: "#534AB7",
     fontWeight: 700,
-    marginBottom: 20,
+    marginBottom: 6,
+    textTransform: "uppercase",
   },
   phaseTag: {
     fontSize: 9,
-    color: "#666",
-    marginBottom: 6,
+    color: "#888",
+    marginBottom: 14,
   },
   title: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: 700,
-    color: "#1a1a1a",
-    marginBottom: 10,
-    lineHeight: 1.25,
+    color: "#111",
+    marginBottom: 14,
+    lineHeight: 1.3,
+    letterSpacing: -0.2,
   },
   metaRow: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 8,
-    marginBottom: 8,
+    marginBottom: 12,
   },
   metaPill: {
-    fontSize: 9,
-    paddingVertical: 3,
-    paddingHorizontal: 8,
-    borderRadius: 10,
+    fontSize: 8.5,
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderRadius: 12,
     borderWidth: 1,
+    fontWeight: 700,
   },
   metaText: {
-    fontSize: 9.5,
-    color: "#666",
-    marginBottom: 4,
+    fontSize: 9,
+    color: "#777",
+    marginBottom: 3,
   },
   goalBox: {
-    marginTop: 14,
-    marginBottom: 22,
-    padding: 12,
-    borderLeftWidth: 3,
-    backgroundColor: "#fafaf8",
+    marginTop: 8,
+    marginBottom: 28,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderLeftWidth: 4,
+    borderRadius: 4,
+    backgroundColor: "#f8f7fd",
   },
   goalLabel: {
-    fontSize: 9,
+    fontSize: 8,
     fontWeight: 700,
     color: "#534AB7",
-    marginBottom: 4,
+    marginBottom: 6,
     textTransform: "uppercase",
-    letterSpacing: 0.5,
+    letterSpacing: 1,
   },
   goalText: {
     fontSize: 10.5,
     color: "#333",
+    lineHeight: 1.55,
   },
   section: {
-    marginBottom: 18,
+    marginBottom: 22,
   },
   sectionHead: {
     flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 10,
-    marginBottom: 8,
-    paddingBottom: 6,
+    alignItems: "center",
+    gap: 12,
+    marginBottom: 12,
+    paddingBottom: 8,
     borderBottomWidth: 1,
-    borderBottomColor: "#e5e5e5",
+    borderBottomColor: "#ececf0",
   },
   sectionNumber: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     color: "#fff",
     fontSize: 10,
     fontWeight: 700,
     textAlign: "center",
-    paddingTop: 5,
+    paddingTop: 6,
   },
   sectionTitle: {
     flex: 1,
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: 700,
-    color: "#1a1a1a",
-    paddingTop: 2,
+    color: "#111",
+    letterSpacing: 0.3,
+    textTransform: "uppercase",
   },
   sectionDesc: {
-    fontSize: 9.5,
-    color: "#666",
+    fontSize: 9,
+    color: "#777",
     fontStyle: "italic",
-    marginBottom: 8,
-    marginLeft: 32,
+    marginBottom: 10,
+    marginLeft: 36,
+    lineHeight: 1.5,
+  },
+  contentBlock: {
+    marginLeft: 36,
+    paddingRight: 4,
   },
   blockParagraph: {
-    marginBottom: 8,
-    marginLeft: 32,
+    marginBottom: 10,
     color: "#333",
+    lineHeight: 1.65,
   },
   blockHeading: {
-    marginBottom: 6,
-    marginLeft: 32,
-    fontWeight: 700,
-    color: "#1a1a1a",
-  },
-  h1: { fontSize: 14 },
-  h2: { fontSize: 12.5 },
-  h3: { fontSize: 11.5 },
-  blockQuote: {
     marginBottom: 8,
-    marginLeft: 40,
-    paddingLeft: 10,
+    marginTop: 4,
+    fontWeight: 700,
+    color: "#111",
+  },
+  h1: { fontSize: 13.5, marginTop: 6 },
+  h2: { fontSize: 12, marginTop: 4 },
+  h3: { fontSize: 11 },
+  blockQuote: {
+    marginBottom: 10,
+    paddingLeft: 12,
+    paddingVertical: 6,
     borderLeftWidth: 2,
-    borderLeftColor: "#ccc",
+    borderLeftColor: "#d8d6f0",
     color: "#555",
     fontStyle: "italic",
   },
   blockCode: {
-    marginBottom: 8,
-    marginLeft: 32,
-    padding: 8,
-    backgroundColor: "#f5f5f0",
+    marginBottom: 10,
+    padding: 10,
+    backgroundColor: "#f5f5f8",
     fontFamily: "Courier",
-    fontSize: 9,
+    fontSize: 8.5,
+    borderRadius: 4,
   },
   listItem: {
     flexDirection: "row",
-    marginBottom: 4,
-    marginLeft: 32,
+    marginBottom: 6,
     paddingRight: 8,
   },
   listBullet: {
-    width: 14,
+    width: 16,
     fontSize: 10,
-    color: "#666",
+    color: "#534AB7",
+    fontWeight: 700,
   },
   listContent: {
     flex: 1,
@@ -167,7 +186,7 @@ const styles = StyleSheet.create({
     textDecoration: "underline",
   },
   videoLink: {
-    color: "#D85A30",
+    color: "#C44D20",
     textDecoration: "underline",
     fontWeight: 700,
   },
@@ -176,52 +195,61 @@ const styles = StyleSheet.create({
   strike: { textDecoration: "line-through" },
   codeInline: {
     fontFamily: "Courier",
-    backgroundColor: "#f0f0eb",
-    fontSize: 9.5,
+    backgroundColor: "#f0f0f4",
+    fontSize: 9,
   },
   imageRef: {
-    marginBottom: 6,
-    marginLeft: 32,
-    fontSize: 9.5,
+    marginBottom: 8,
+    fontSize: 9,
     color: "#534AB7",
   },
+  resourcesBox: {
+    marginTop: 16,
+    padding: 14,
+    backgroundColor: "#fafaf8",
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: "#ececf0",
+  },
   resourcesTitle: {
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: 700,
-    marginTop: 8,
     marginBottom: 10,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: "#e5e5e5",
-    color: "#1a1a1a",
+    color: "#111",
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
   },
   resourceRow: {
-    marginBottom: 6,
-    marginLeft: 8,
+    marginBottom: 8,
+    paddingBottom: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
   },
   resourceKind: {
-    fontSize: 8,
+    fontSize: 7.5,
     color: "#999",
-    marginBottom: 1,
+    marginBottom: 2,
     textTransform: "uppercase",
+    letterSpacing: 0.4,
   },
   footer: {
     position: "absolute",
-    bottom: 24,
-    left: 48,
-    right: 48,
+    bottom: 28,
+    left: 56,
+    right: 56,
     flexDirection: "row",
     justifyContent: "space-between",
     borderTopWidth: 1,
-    borderTopColor: "#e5e5e5",
-    paddingTop: 8,
-    fontSize: 8,
-    color: "#999",
+    borderTopColor: "#ececf0",
+    paddingTop: 10,
+    fontSize: 7.5,
+    color: "#aaa",
   },
   emptyNote: {
-    marginLeft: 32,
-    color: "#999",
+    marginLeft: 36,
+    color: "#aaa",
     fontStyle: "italic",
+    fontSize: 9.5,
   },
 });
 
@@ -269,33 +297,35 @@ function PdfInlineParts({ parts, linkStyle, videoStyle }) {
   );
 }
 
-function PdfBlock({ block, phaseColor }) {
+function PdfBlock({ block }) {
+  const wrap = (node) => <View style={styles.contentBlock}>{node}</View>;
+
   switch (block.type) {
     case "heading": {
       const depthStyle =
         block.depth <= 1 ? styles.h1 : block.depth === 2 ? styles.h2 : styles.h3;
-      return (
+      return wrap(
         <Text style={[styles.blockHeading, depthStyle]}>
           <PdfInlineParts parts={block.parts} />
         </Text>
       );
     }
     case "paragraph":
-      return (
+      return wrap(
         <Text style={styles.blockParagraph}>
           <PdfInlineParts parts={block.parts} />
         </Text>
       );
     case "blockquote":
-      return (
+      return wrap(
         <Text style={styles.blockQuote}>
           <PdfInlineParts parts={block.parts} />
         </Text>
       );
     case "code":
-      return <Text style={styles.blockCode}>{block.text}</Text>;
+      return wrap(<Text style={styles.blockCode}>{block.text}</Text>);
     case "list":
-      return (
+      return wrap(
         <View>
           {block.items.map((item, i) => (
             <View key={`li-${i}`} style={styles.listItem}>
@@ -303,7 +333,7 @@ function PdfBlock({ block, phaseColor }) {
                 {block.ordered ? `${i + 1}.` : "•"}
               </Text>
               <View style={styles.listContent}>
-                <Text>
+                <Text style={styles.blockParagraph}>
                   <PdfInlineParts parts={item.parts} />
                 </Text>
               </View>
@@ -312,29 +342,28 @@ function PdfBlock({ block, phaseColor }) {
         </View>
       );
     case "image":
-      return (
+      return wrap(
         <Text style={styles.imageRef}>
           <Link src={block.src} style={styles.link}>
-            [Imagen: {block.alt}] — {block.src}
+            Imagen: {block.alt}
           </Link>
         </Text>
       );
     case "video":
-      return (
-        <Text style={[styles.blockParagraph, { marginLeft: 32 }]}>
+      return wrap(
+        <Text style={styles.blockParagraph}>
           <Link src={block.url} style={styles.videoLink}>
-            {block.text}
+            ▶ {block.text}
           </Link>
         </Text>
       );
     case "hr":
-      return (
+      return wrap(
         <View
           style={{
-            marginVertical: 8,
-            marginLeft: 32,
+            marginVertical: 10,
             borderBottomWidth: 1,
-            borderBottomColor: "#e5e5e5",
+            borderBottomColor: "#ececf0",
           }}
         />
       );
@@ -362,7 +391,7 @@ function ComponentSection({ component, phaseColor }) {
         <Text style={styles.emptyNote}>Sin contenido en este componente.</Text>
       ) : (
         blocks.map((block, i) => (
-          <PdfBlock key={`${component.id}-b-${i}`} block={block} phaseColor={phaseColor} />
+          <PdfBlock key={`${component.id}-b-${i}`} block={block} />
         ))
       )}
     </View>
@@ -394,7 +423,8 @@ export function SessionPdfDocument({ session, phase, videos = [] }) {
       subject="Síntesis de clase"
     >
       <Page size="A4" style={styles.page}>
-        <Text style={styles.headerBrand}>SPEED · PROYECTO SPEED</Text>
+        <View style={styles.topRule} />
+        <Text style={styles.headerBrand}>SPEED · Proyecto SPEED</Text>
         <Text style={styles.phaseTag}>
           Fase {phase?.code} — {phase?.title}
         </Text>
@@ -446,10 +476,16 @@ export function SessionPdfDocument({ session, phase, videos = [] }) {
         )}
 
         {resources.length > 0 && (
-          <View wrap={false}>
+          <View style={styles.resourcesBox} wrap={false}>
             <Text style={styles.resourcesTitle}>Recursos multimedia y enlaces</Text>
             {resources.map((r, i) => (
-              <View key={`res-${i}`} style={styles.resourceRow}>
+              <View
+                key={`res-${i}`}
+                style={[
+                  styles.resourceRow,
+                  i === resources.length - 1 ? { borderBottomWidth: 0, marginBottom: 0, paddingBottom: 0 } : null,
+                ]}
+              >
                 <Text style={styles.resourceKind}>
                   {r.kind === "video"
                     ? "Video"

@@ -10,7 +10,13 @@ import { sortSessionsByDate } from "../kernel/sortByDate";
 import { slugifyFilename } from "../kernel/markdownToPdfBlocks";
 import { markdownToHtml } from "./markdownToHtml";
 
-const SITE_BUILD_VERSION = "2026-06-24-pdf-v4";
+const SITE_BUILD_VERSION = "2026-06-24-pdf-v5";
+
+const PDF_ICON_SVG = `<svg class="site-pdf-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`;
+
+function renderPdfIconButton(href, downloadName, extraClass = "") {
+  return `<a class="site-pdf-icon-btn ${extraClass}" href="${href}" download="${escapeHtml(downloadName)}" title="Descargar plan de clase (PDF)" aria-label="Descargar plan de clase en PDF">${PDF_ICON_SVG}</a>`;
+}
 
 function escapeHtml(value) {
   return String(value ?? "")
@@ -116,9 +122,7 @@ function renderSessionPage(session, phase) {
     <div class="pv-container">
       <nav class="site-nav site-nav--bar">
         <a href="../index.html" class="site-nav__back">← Volver al índice del curso</a>
-        <a class="site-pdf-btn site-pdf-btn--nav" href="${session.id}.pdf" download="${escapeHtml(pdfName)}">
-          ↓ Descargar plan de clase (PDF)
-        </a>
+        ${renderPdfIconButton(`${session.id}.pdf`, pdfName, "site-pdf-icon-btn--nav")}
       </nav>
 
       <div class="pv-hero pv-hero--by-status" data-status="${session.status}"
@@ -140,11 +144,6 @@ function renderSessionPage(session, phase) {
               <span class="pv-hero__status-dot" style="background:${statusCfg.color}"></span>
               ${escapeHtml(statusCfg.label)}
             </span>
-          </div>
-          <div class="pv-hero__pdf">
-            <a class="site-pdf-btn site-pdf-btn--hero" href="${session.id}.pdf" download="${escapeHtml(pdfName)}">
-              ↓ Descargar plan de clase (PDF con enlaces)
-            </a>
           </div>
         </div>
       </div>
@@ -176,17 +175,15 @@ function renderIndexSessionItem(session) {
     const pdfName = sessionPdfDownloadName(session);
     return `<li>
       <div class="site-session-card-wrap" style="border-left-color:${statusCfg.border}">
-        <a class="site-session-card site-session-card__main" href="${sessionPagePath(session.id)}">
-          <div class="site-session-card__head">
-            <strong>${escapeHtml(label)}</strong>
-            ${pill}
-          </div>
-          <div class="site-session-list__meta">${escapeHtml(meta)}</div>
-        </a>
-        <div class="site-session-card__pdf">
-          <a class="site-pdf-btn site-pdf-btn--card" href="${sessionPdfPath(session.id)}" download="${escapeHtml(pdfName)}">
-            ↓ Descargar plan de clase (PDF)
+        <div class="site-session-card__main">
+          <a class="site-session-card__link" href="${sessionPagePath(session.id)}">
+            <strong class="site-session-card__title">${escapeHtml(label)}</strong>
+            <div class="site-session-list__meta">${escapeHtml(meta)}</div>
           </a>
+          <div class="site-session-card__actions">
+            ${pill}
+            ${renderPdfIconButton(sessionPdfPath(session.id), pdfName)}
+          </div>
         </div>
       </div>
     </li>`;
@@ -254,7 +251,7 @@ function renderIndexPage(phases, allSessions) {
         <div class="site-header__brand">SPEED</div>
         <p class="site-header__sub">Piloto de robótica educativa · Uniminuto 2026</p>
         <p class="site-header__sub">Guía de clases para docentes participantes</p>
-        <p class="site-header__pdf-hint">Las clases en <strong>En desarrollo</strong> o <strong>Dictada</strong> incluyen el plan en PDF con enlaces a videos y recursos.</p>
+        <p class="site-header__pdf-hint">Las clases abiertas incluyen un icono <span class="site-header__pdf-hint-icon" aria-hidden="true">↓</span> para descargar el plan en PDF con enlaces a recursos.</p>
       </header>
       ${legend}
       ${phaseSections}

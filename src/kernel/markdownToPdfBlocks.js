@@ -4,6 +4,67 @@ import { normalizeUrl, extractYouTubeId, youtubeWatchUrl } from "./urlUtils";
 
 const MD_LINK_IN_TEXT_RE = /\[([^\]]+)\]\(([^)]+)\)/g;
 
+/** Convierte HTML del editor a markdown limpio antes de generar el PDF. */
+function normalizeContentForPdf(markdown) {
+  if (!markdown?.trim()) return "";
+
+  let s = markdown;
+
+  s = s.replace(
+    /<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi,
+    (_, href, inner) => {
+      const label = inner.replace(/<[^>]+>/g, "").trim() || href;
+      return `[${label}](${href})`;
+    }
+  );
+
+  s = s.replace(
+    /<div class="markdown-embed[^"]*">[\s\S]*?<iframe[^>]+src=["']([^"']+)["'][\s\S]*?<\/div>/gi,
+    (_, src) => {
+      const ytId = extractYouTubeId(src);
+      return ytId
+        ? `\n\n[Ver video en YouTube](${youtubeWatchUrl(ytId)})\n\n`
+        : "";
+    }
+  );
+
+  s = s.replace(
+    /<h([1-6])[^>]*>([\s\S]*?)<\/h\1>/gi,
+    (_, depth, inner) => {
+      const text = inner.replace(/<[^>]+>/g, "").trim();
+      return `\n\n${"#".repeat(Number(depth))} ${text}\n\n`;
+    }
+  );
+
+  s = s.replace(
+    /<span\b[^>]*style=["'][^"']*color:\s*([^;"']+)[^"']*["'][^>]*>([\s\S]*?)<\/span>/gi,
+    (_, _color, inner) => inner.replace(/<[^>]+>/g, "").trim()
+  );
+
+  s = s.replace(/<div[^>]*>/gi, "\n").replace(/<\/div>/gi, "\n");
+  s = s.replace(/<p[^>]*>/gi, "\n").replace(/<\/p>/gi, "\n");
+  s = s.replace(/<br\s*\/?>/gi, "\n");
+  s = s.replace(/<li[^>]*>/gi, "\n- ").replace(/<\/li>/gi, "\n");
+  s = s.replace(/<ul[^>]*>/gi, "\n").replace(/<\/ul>/gi, "\n");
+  s = s.replace(/<ol[^>]*>/gi, "\n").replace(/<\/ol>/gi, "\n");
+  s = s.replace(/<[^>]+>/g, "");
+  s = s.replace(/\n{3,}/g, "\n\n");
+
+  return s.trim();
+}
+
+function finalizeParts(parts) {
+  const result = [];
+  for (const part of parts || []) {
+    if (part.type === "text" && part.text?.includes("](")) {
+      result.push(...parseMarkdownLinksInPlainText(part.text));
+    } else {
+      result.push(part);
+    }
+  }
+  return result;
+}
+
 function parseMarkdownLinksInPlainText(text) {
   if (!text?.includes("](")) {
     return [{ type: "text", text: text || "" }];
@@ -186,7 +247,7 @@ function headingParts(token) {
 export function markdownToPdfBlocks(markdown) {
   if (!markdown?.trim()) return [];
 
-  const tokens = marked.lexer(markdown);
+  const tokens = marked.lexer(normalizeContentForPdf(markdown));
   const blocks = [];
 
   for (const token of tokens) {
@@ -195,23 +256,33 @@ export function markdownToPdfBlocks(markdown) {
         blocks.push({
           type: "heading",
           depth: token.depth,
-          parts: headingParts(token),
+          parts: finalizeParts(headingParts(token)),
         });
         break;
       case "paragraph":
-        blocks.push({ type: "paragraph", parts: parseInline(token.tokens) });
+        blocks.push({
+          type: "paragraph",
+          parts: finalizeParts(parseInline(token.tokens)),
+        });
         break;
       case "list":
         blocks.push({
           type: "list",
           ordered: token.ordered,
           items: token.items.map((item) => ({
-            parts: parseInline(item.tokens),
+            parts: finalizeParts(
+              item.tokens?.length
+                ? parseInline(item.tokens)
+                : parseMarkdownLinksInPlainText(item.text || "")
+            ),
           })),
         });
         break;
       case "blockquote":
-        blocks.push({ type: "blockquote", parts: parseInline(token.tokens) });
+        blocks.push({
+          type: "blockquote",
+          parts: finalizeParts(parseInline(token.tokens)),
+        });
         break;
       case "code":
         blocks.push({ type: "code", text: token.text });
@@ -234,10 +305,15 @@ export function markdownToPdfBlocks(markdown) {
       case "space":
         break;
       default:
-        if (token.text) {
+        if (token.raw) {
           blocks.push({
             type: "paragraph",
-            parts: [{ type: "text", text: token.text }],
+            parts: finalizeParts(parseMarkdownLinksInPlainText(token.raw)),
+          });
+        } else if (token.text) {
+          blocks.push({
+            type: "paragraph",
+            parts: finalizeParts(parseMarkdownLinksInPlainText(token.text)),
           });
         }
     }
