@@ -1,7 +1,8 @@
 const LIVE_SITE_URL =
   import.meta.env.VITE_PUBLIC_SITE_URL || "https://www.proyectospeed.com";
 
-const BUILD_RE = /SPEED build:\s*([^\s>-]+)/i;
+// Captura la versión completa, p. ej. 2026-06-24-pdf-v5 (no cortar en guiones)
+const BUILD_RE = /SPEED build:\s*([^\s>]+)/i;
 
 export function getPublicSiteUrl() {
   return LIVE_SITE_URL.replace(/\/$/, "");
