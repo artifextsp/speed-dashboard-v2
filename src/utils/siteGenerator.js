@@ -9,8 +9,10 @@ import {
 import { sortSessionsByDate } from "../kernel/sortByDate";
 import { slugifyFilename } from "../kernel/markdownToPdfBlocks";
 import { markdownToHtml } from "./markdownToHtml";
+import { generateSessionPdfBase64 } from "./sessionPdfExporter.jsx";
+import { loadSiteAssetFiles, SITE_LOGO_PATHS } from "./siteAssets.js";
 
-const SITE_BUILD_VERSION = "2026-06-24-pdf-v6";
+const SITE_BUILD_VERSION = "2026-06-24-pdf-v7";
 
 export { SITE_BUILD_VERSION };
 
@@ -41,6 +43,59 @@ function sessionPdfDownloadName(session) {
     ? `sesion-${session.session_number}`
     : "clase";
   return `${prefix}-${slugifyFilename(session.title)}.pdf`;
+}
+
+function renderConventionsCard(allSessions) {
+  const accessible = allSessions.filter((s) => canStudentAccessSession(s.status)).length;
+  const items = [
+    {
+      status: "borrador",
+      desc: "Visible en el temario, pero el contenido aún no está disponible.",
+    },
+    {
+      status: "en_revision",
+      desc: "Clase activa: puedes entrar, ver recursos y descargar el PDF.",
+    },
+    {
+      status: "publicado",
+      desc: "Clase dictada: acceso completo al material y al PDF.",
+    },
+  ];
+
+  const cards = items
+    .map(({ status, desc }) => {
+      const pill = renderStatusPill(status);
+      return `<div class="site-convention-card">
+        <div class="site-convention-card__pill">${pill}</div>
+        <p class="site-convention-card__desc">${escapeHtml(desc)}</p>
+      </div>`;
+    })
+    .join("");
+
+  return `<section class="site-conventions" aria-label="Convenciones de estado">
+    <h2 class="site-conventions__title">Estado de las clases</h2>
+    <div class="site-conventions__grid">${cards}</div>
+    <p class="site-conventions__footer">
+      <strong>${accessible}</strong> de <strong>${allSessions.length}</strong> clases con acceso abierto.
+      El icono <span class="site-header__pdf-hint-icon" aria-hidden="true">↓</span> permite descargar el plan en PDF.
+    </p>
+  </section>`;
+}
+
+function renderSiteHeader() {
+  return `<header class="site-header">
+    <div class="site-header__bar">
+      <div class="site-header__titles">
+        <div class="site-header__brand">SPEED</div>
+        <p class="site-header__sub">Piloto de robótica educativa · Uniminuto 2026</p>
+        <p class="site-header__sub">Guía de clases para docentes participantes</p>
+      </div>
+      <div class="site-header__logos">
+        <img src="${SITE_LOGO_PATHS.uniminuto}" alt="Corporación Universitaria Uniminuto" class="site-header__logo site-header__logo--uniminuto" />
+        <img src="${SITE_LOGO_PATHS.bogota}" alt="Secretaría de Educación de Bogotá" class="site-header__logo site-header__logo--bogota" />
+      </div>
+    </div>
+  </header>`;
 }
 
 function renderStatusPill(status) {
@@ -229,14 +284,6 @@ function renderIndexPage(phases, allSessions) {
     .filter(Boolean)
     .join("\n");
 
-  const accessible = allSessions.filter((s) => canStudentAccessSession(s.status)).length;
-  const legend = `<p class="site-legend">
-    <strong>Leyenda:</strong>
-    ${renderStatusPill("borrador")} visible, sin acceso ·
-    ${renderStatusPill("en_revision")} y ${renderStatusPill("publicado")} puedes entrar
-    · ${accessible} de ${allSessions.length} clases abiertas
-  </p>`;
-
   return `<!DOCTYPE html>
 <html lang="es">
 <head>
@@ -249,13 +296,8 @@ function renderIndexPage(phases, allSessions) {
 <body>
   <div class="pv-wrapper">
     <div class="pv-container">
-      <header class="site-header">
-        <div class="site-header__brand">SPEED</div>
-        <p class="site-header__sub">Piloto de robótica educativa · Uniminuto 2026</p>
-        <p class="site-header__sub">Guía de clases para docentes participantes</p>
-        <p class="site-header__pdf-hint">Las clases abiertas incluyen un icono <span class="site-header__pdf-hint-icon" aria-hidden="true">↓</span> para descargar el plan en PDF con enlaces a recursos.</p>
-      </header>
-      ${legend}
+      ${renderSiteHeader()}
+      ${renderConventionsCard(allSessions)}
       ${phaseSections}
       <div class="pv-footer">Proyecto SPEED · Uniminuto 2026</div>
     </div>
@@ -271,14 +313,16 @@ function renderIndexPage(phases, allSessions) {
  */
 export async function generateSiteFiles(phases, sessions, options = {}) {
   const { videosBySessionId = {} } = options;
-  const { generateSessionPdfBase64 } = await import("./sessionPdfExporter.jsx");
 
   const allSessions = sortSessionsByDate(sessions);
   const accessible = allSessions.filter((s) => canStudentAccessSession(s.status));
 
+  const assetFiles = await loadSiteAssetFiles();
+
   const files = {
     "site.css": siteCss,
     "index.html": renderIndexPage(phases, allSessions),
+    ...assetFiles,
   };
 
   for (const session of accessible) {

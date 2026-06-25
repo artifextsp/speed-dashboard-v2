@@ -1,14 +1,8 @@
+import { pdf } from "@react-pdf/renderer";
+import { SessionPdfDocument } from "../components/export/SessionPdfDocument.jsx";
 import { slugifyFilename } from "../kernel/markdownToPdfBlocks";
 
-async function loadPdfModules() {
-  return Promise.all([
-    import("@react-pdf/renderer"),
-    import("../components/export/SessionPdfDocument.jsx"),
-  ]);
-}
-
 async function renderSessionPdfBlob(session, phase, videos = []) {
-  const [{ pdf }, { SessionPdfDocument }] = await loadPdfModules();
   return pdf(
     <SessionPdfDocument session={session} phase={phase} videos={videos} />
   ).toBlob();
