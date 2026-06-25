@@ -714,14 +714,26 @@ body {
 /* ── Publish bar ── */
 .publish-bar {
   display: flex;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 12px;
   padding: 16px 20px;
   margin-bottom: 20px;
   background: linear-gradient(135deg, #eeedfe 0%, #e6f1fb 100%);
   border: 1px solid #d4d0f0;
   border-radius: var(--radius-lg);
+}
+
+.publish-bar__main {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.publish-bar__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .publish-bar__btn {
@@ -734,6 +746,46 @@ body {
 .publish-bar__hint {
   font-size: 12px;
   color: var(--color-text-secondary);
+}
+
+.publish-bar__version {
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+}
+
+.publish-bar__alert {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  background: #fff8e6;
+  border: 1px solid #e5a017;
+  color: #7a5a10;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.publish-bar__alert strong {
+  color: #5c4208;
+}
+
+.publish-bar__alert p {
+  margin-top: 4px;
+}
+
+.publish-bar__alert a {
+  color: #534AB7;
+  font-weight: 600;
+}
+
+.publish-bar__ok {
+  font-size: 12px;
+  color: #3d6b24;
+  padding: 8px 12px;
+  background: #eaf3de;
+  border-radius: var(--radius-md);
+  border: 1px solid #4a7a18;
 }
 
 /* ── Editor ── */
