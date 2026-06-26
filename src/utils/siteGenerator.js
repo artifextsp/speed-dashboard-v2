@@ -13,7 +13,7 @@ import { markdownToHtml } from "./markdownToHtml";
 import { generateSessionPdfBase64 } from "./sessionPdfExporter.jsx";
 import { loadSiteAssetFiles, SITE_LOGO_PATHS } from "./siteAssets.js";
 
-const SITE_BUILD_VERSION = "2026-06-26-markdown-bold-v1";
+const SITE_BUILD_VERSION = "2026-06-26-markdown-headings-v1";
 
 export { SITE_BUILD_VERSION };
 

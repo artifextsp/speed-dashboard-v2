@@ -21,9 +21,73 @@ function restoreBlocks(markdown, tokens) {
 }
 
 function looksLikeInlineMarkdown(text) {
-  return /!\[[^\]]*\]\(|\*\*[^*\n]+?\*\*|__[^_\n]+?__|(?<![*_])\*[^*\n]+?\*(?![*_])|\[[^\]]+\]\([^)]+\)/.test(
+  return /!\[[^\]]*\]\(|\*\*[^*\n]+?\*\*|__[^_\n]+?__|(?<![*_])\*[^*\n]+?\*(?![*_])|\[[^\]]+\]\([^)]+\)|#{1,6}\s/.test(
     text
   );
+}
+
+function cleanHeadingInner(text) {
+  return String(text ?? "")
+    .trim()
+    .replace(/^(#{1,6})\s+/g, "")
+    .replace(/^\*\*(.+)\*\*$/s, "$1")
+    .replace(/^\*\*/g, "")
+    .replace(/\*\*$/g, "")
+    .replace(/^(#{1,6})\s+/g, "");
+}
+
+/** Repara encabezados atrapados en HTML o con ## duplicados. */
+export function repairUnparsedHeadings(markdown) {
+  let out = markdown;
+
+  out = out.replace(
+    /^#{1,6}\s*<span([^>]*)>\s*(#{1,6})\s*([\s\S]*?)<\/span>\s*$/gim,
+    (_, attrs, hashes, inner) => {
+      const level = hashes.length;
+      return `<h${level}><span${attrs}>${cleanHeadingInner(inner)}</span></h${level}>`;
+    }
+  );
+
+  out = out.replace(/^#{1,6}\s+(?=<h[1-6]\b)/gm, "");
+
+  out = out.replace(
+    /<p\b[^>]*>\s*<span([^>]*)>\s*(#{1,6})\s*([\s\S]*?)<\/span>\s*<\/p>/gi,
+    (_, attrs, hashes, inner) => {
+      const level = hashes.length;
+      return `<h${level}><span${attrs}>${cleanHeadingInner(inner)}</span></h${level}>`;
+    }
+  );
+
+  out = out.replace(
+    /<span([^>]*)>\s*(#{1,6})\s*([\s\S]*?)<\/span>/gi,
+    (match, attrs, hashes, inner) => {
+      if (/<h[1-6]\b/i.test(match)) return match;
+      const level = hashes.length;
+      return `<h${level}><span${attrs}>${cleanHeadingInner(inner)}</span></h${level}>`;
+    }
+  );
+
+  out = out.replace(/<h([1-6])>([\s\S]*?)<\/h\1>/gi, (_, level, inner) => {
+    const cleaned = inner
+      .replace(/(>)\s*#{1,6}\s+/g, "$1")
+      .replace(/\*\*<span/g, "<span")
+      .replace(/<\/span>\*\*/g, "</span>");
+    return `<h${level}>${cleaned}</h${level}>`;
+  });
+
+  out = out.replace(/^#{1,6}[^\s#<].+$/gm, (line) => {
+    const match = line.match(/^(#{1,6})\s*(.+)$/);
+    if (!match) return line;
+    const [, hashes, rest] = match;
+    const level = hashes.length;
+    const spanMatch = rest.match(/<span([^>]*)>([\s\S]*?)<\/span>/i);
+    if (spanMatch) {
+      return `<h${level}><span${spanMatch[1]}>${cleanHeadingInner(spanMatch[2])}</span></h${level}>`;
+    }
+    return line;
+  });
+
+  return out;
 }
 
 function looksLikeBlockMarkdown(text) {
@@ -104,6 +168,7 @@ export function prepareMarkdownForRender(markdown) {
   out = unwrapParagraphsWithMarkdown(out);
   out = ensureBlockBoundaries(out);
   out = ensureSpacerBoundaries(out);
+  out = repairUnparsedHeadings(out);
   out = repairUnparsedEmphasis(out);
   return out;
 }

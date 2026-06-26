@@ -64,10 +64,23 @@ function fixRawMarkdownImages(html) {
 
 /** Convierte ## título que quedó sin parsear. */
 function fixRawMarkdownHeadings(html) {
-  return html.replace(/<p>\s*(#{1,6})\s+([^<]+?)\s*<\/p>/gi, (_, hashes, text) => {
-    const level = hashes.length;
-    return `<h${level}>${text.trim()}</h${level}>`;
-  });
+  return html
+    .replace(/<p>\s*(#{1,6})\s+([^<]+?)\s*<\/p>/gi, (_, hashes, text) => {
+      const level = hashes.length;
+      return `<h${level}>${text.trim()}</h${level}>`;
+    })
+    .replace(
+      /<p>\s*<span([^>]*)>\s*(#{1,6})\s*([^<]+?)\s*<\/span>\s*<\/p>/gi,
+      (_, attrs, hashes, text) => {
+        const level = hashes.length;
+        return `<h${level}><span${attrs}>${text.trim()}</span></h${level}>`;
+      }
+    )
+    .replace(/<span([^>]*)>\s*(#{1,6})\s*([^<]+?)\s*<\/span>/gi, (match, attrs, hashes, text) => {
+      if (/<h[1-6][^>]*>[\s\S]*<span[^>]*>\s*#{1,6}/i.test(match)) return match;
+      const level = hashes.length;
+      return `<h${level}><span${attrs}>${text.trim()}</span></h${level}>`;
+    });
 }
 
 /** Añade enlace clicable debajo de cada embed de YouTube. */

@@ -123,6 +123,37 @@ const spacerCommand = {
   },
 };
 
+function cleanHeadingText(text) {
+  return String(text ?? "")
+    .trim()
+    .replace(/^#{1,6}\s+/, "")
+    .replace(/^\*\*(.+)\*\*$/s, "$1")
+    .replace(/^\*\*/, "")
+    .replace(/\*\*$/, "");
+}
+
+function makeHeadingCommand(level, baseCommand) {
+  return {
+    name: baseCommand.name,
+    keyCommand: baseCommand.keyCommand,
+    buttonProps: baseCommand.buttonProps,
+    icon: baseCommand.icon,
+    execute: (state, api) => {
+      const raw =
+        state.selectedText || window.prompt(`Título ${level}`, "Título") || "Título";
+      const text = cleanHeadingText(raw);
+      if (/<[a-z][\s>]/i.test(text)) {
+        api.replaceSelection(`\n\n<h${level}>${text}</h${level}>\n\n`);
+        return;
+      }
+      api.replaceSelection(`\n\n${"#".repeat(level)} ${text}\n\n`);
+    },
+  };
+}
+
+const heading2Command = makeHeadingCommand(2, commands.title2);
+const heading3Command = makeHeadingCommand(3, commands.title3);
+
 const EDITOR_COMMANDS = [
   commands.bold,
   commands.italic,
@@ -130,8 +161,8 @@ const EDITOR_COMMANDS = [
   textColorCommand,
   fontSizeCommand,
   commands.divider,
-  commands.title2,
-  commands.title3,
+  heading2Command,
+  heading3Command,
   commands.divider,
   commands.unorderedListCommand,
   commands.orderedListCommand,
