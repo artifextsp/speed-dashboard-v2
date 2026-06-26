@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   extractGoogleDriveFileId,
   googleDriveImageUrls,
@@ -18,10 +18,50 @@ function shouldShowCaption(alt) {
   return label.length > 0 && label.toLowerCase() !== "imagen";
 }
 
+function MarkdownLightbox({ src, alt, onClose }) {
+  useEffect(() => {
+    const onKey = (event) => {
+      if (event.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = "";
+    };
+  }, [onClose]);
+
+  return (
+    <div
+      className="markdown-lightbox"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Imagen ampliada"
+    >
+      <button
+        type="button"
+        className="markdown-lightbox__close"
+        onClick={onClose}
+        aria-label="Cerrar"
+      >
+        ×
+      </button>
+      <img
+        src={src}
+        alt={alt || ""}
+        className="markdown-lightbox__img"
+        onClick={(event) => event.stopPropagation()}
+      />
+    </div>
+  );
+}
+
 export function MarkdownImage({ src, alt }) {
   const candidates = useMemo(() => buildImageCandidates(src), [src]);
   const [attempt, setAttempt] = useState(0);
   const [failed, setFailed] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
   const currentSrc = candidates[attempt] ?? candidates[0];
   const showCaption = shouldShowCaption(alt);
 
@@ -48,26 +88,43 @@ export function MarkdownImage({ src, alt }) {
   }
 
   return (
-    <figure className="markdown-image-card">
-      <div className="markdown-image-card__frame">
-        <img
+    <>
+      <figure className="markdown-image-card markdown-image-card--zoomable">
+        <button
+          type="button"
+          className="markdown-image-card__frame"
+          onClick={() => setLightboxOpen(true)}
+          aria-label={alt ? `Ampliar imagen: ${alt}` : "Ampliar imagen"}
+        >
+          <img
+            src={currentSrc}
+            alt={alt || ""}
+            className="markdown-image-card__img"
+            loading="lazy"
+            referrerPolicy="no-referrer"
+            onError={() => {
+              if (attempt < candidates.length - 1) {
+                setAttempt((n) => n + 1);
+                return;
+              }
+              setFailed(true);
+            }}
+          />
+          <span className="markdown-image-card__hint" aria-hidden="true">
+            Clic para ampliar
+          </span>
+        </button>
+        {showCaption ? (
+          <figcaption className="markdown-image-card__caption">{alt}</figcaption>
+        ) : null}
+      </figure>
+      {lightboxOpen ? (
+        <MarkdownLightbox
           src={currentSrc}
-          alt={alt || ""}
-          className="markdown-image-card__img"
-          loading="lazy"
-          referrerPolicy="no-referrer"
-          onError={() => {
-            if (attempt < candidates.length - 1) {
-              setAttempt((n) => n + 1);
-              return;
-            }
-            setFailed(true);
-          }}
+          alt={alt}
+          onClose={() => setLightboxOpen(false)}
         />
-      </div>
-      {showCaption ? (
-        <figcaption className="markdown-image-card__caption">{alt}</figcaption>
       ) : null}
-    </figure>
+    </>
   );
 }

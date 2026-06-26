@@ -43,6 +43,33 @@ function fixRawMarkdownLinks(html) {
   });
 }
 
+function buildImageFigureHtml(alt, url) {
+  const src = resolveImageUrl(url.trim());
+  const safeAlt = alt.trim();
+  const caption =
+    safeAlt && safeAlt.toLowerCase() !== "imagen"
+      ? `<figcaption class="markdown-image-card__caption">${safeAlt}</figcaption>`
+      : "";
+  return `<figure class="markdown-image-card markdown-image-card--zoomable"><div class="markdown-image-card__frame" role="button" tabindex="0" aria-label="Ampliar imagen"><img class="markdown-image-card__img" src="${src}" alt="${safeAlt}" loading="lazy" referrerpolicy="no-referrer" /></div>${caption}</figure>`;
+}
+
+/** Convierte ![alt](url) que quedó sin parsear. */
+function fixRawMarkdownImages(html) {
+  return html
+    .replace(/<p>\s*!\[([^\]]*)\]\(([^)]+)\)\s*<\/p>/gi, (_, alt, url) =>
+      buildImageFigureHtml(alt, url)
+    )
+    .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (_, alt, url) => buildImageFigureHtml(alt, url));
+}
+
+/** Convierte ## título que quedó sin parsear. */
+function fixRawMarkdownHeadings(html) {
+  return html.replace(/<p>\s*(#{1,6})\s+([^<]+?)\s*<\/p>/gi, (_, hashes, text) => {
+    const level = hashes.length;
+    return `<h${level}>${text.trim()}</h${level}>`;
+  });
+}
+
 /** Añade enlace clicable debajo de cada embed de YouTube. */
 function enrichYouTubeEmbeds(html) {
   const embedRe =
@@ -83,13 +110,15 @@ function wrapImagesInCards(html) {
       alt && alt.toLowerCase() !== "imagen"
         ? `<figcaption class="markdown-image-card__caption">${alt}</figcaption>`
         : "";
-    return `<figure class="markdown-image-card"><div class="markdown-image-card__frame">${img}</div>${caption}</figure>`;
+    return `<figure class="markdown-image-card markdown-image-card--zoomable"><div class="markdown-image-card__frame" role="button" tabindex="0" aria-label="Ampliar imagen">${img}</div>${caption}</figure>`;
   });
 }
 
 export function enrichContentHtml(html) {
   if (!html) return "";
   let out = html;
+  out = fixRawMarkdownImages(out);
+  out = fixRawMarkdownHeadings(out);
   out = fixRawMarkdownLinks(out);
   out = enrichImageSources(out);
   out = wrapImagesInCards(out);

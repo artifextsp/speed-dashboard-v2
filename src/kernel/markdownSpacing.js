@@ -12,7 +12,3 @@ export function expandMarkdownVerticalSpace(markdown) {
     return `\n\n${spacers}\n`;
   });
 }
-
-export function prepareMarkdownForRender(markdown) {
-  return expandMarkdownVerticalSpace(markdown ?? "");
-}

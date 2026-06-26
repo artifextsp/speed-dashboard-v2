@@ -1,6 +1,6 @@
 import { marked } from "marked";
 import { enrichContentHtml } from "./enrichContentHtml";
-import { prepareMarkdownForRender } from "../kernel/markdownSpacing";
+import { prepareMarkdownForRender } from "../kernel/markdownNormalize";
 
 marked.setOptions({
   gfm: true,

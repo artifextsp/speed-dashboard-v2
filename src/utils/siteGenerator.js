@@ -1,4 +1,5 @@
 import siteCss from "../../public/site-template/site.css?raw";
+import siteJs from "../../public/site-template/site.js?raw";
 import { PHASE_COLORS, MODALITY_LABELS } from "./constants";
 import { resolveClassComponents } from "../kernel/legacyMigration";
 import { withDisplayNumbers } from "../kernel/componentManager";
@@ -12,7 +13,7 @@ import { markdownToHtml } from "./markdownToHtml";
 import { generateSessionPdfBase64 } from "./sessionPdfExporter.jsx";
 import { loadSiteAssetFiles, SITE_LOGO_PATHS } from "./siteAssets.js";
 
-const SITE_BUILD_VERSION = "2026-06-26-content-spacing-v1";
+const SITE_BUILD_VERSION = "2026-06-26-markdown-fix-v1";
 
 export { SITE_BUILD_VERSION };
 
@@ -215,6 +216,7 @@ function renderSessionPage(session, phase) {
       </div>
     </div>
   </div>
+  <script src="../site.js"></script>
 </body>
 </html>`;
 }
@@ -303,6 +305,7 @@ function renderIndexPage(phases, allSessions) {
       <div class="pv-footer">Proyecto SPEED · Uniminuto 2026</div>
     </div>
   </div>
+  <script src="site.js"></script>
 </body>
 </html>`;
 }
@@ -322,6 +325,7 @@ export async function generateSiteFiles(phases, sessions, options = {}) {
 
   const files = {
     "site.css": siteCss,
+    "site.js": siteJs,
     "index.html": renderIndexPage(phases, allSessions),
     ...assetFiles,
   };

@@ -2,7 +2,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
 import { normalizeUrl, extractYouTubeId, youtubeWatchUrl } from "../../kernel/urlUtils";
-import { prepareMarkdownForRender } from "../../kernel/markdownSpacing";
+import { prepareMarkdownForRender } from "../../kernel/markdownNormalize";
 import { friendlyLinkLabel } from "../../utils/enrichContentHtml";
 import { MarkdownImage } from "./MarkdownImage";
 
