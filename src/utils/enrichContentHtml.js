@@ -114,11 +114,20 @@ function wrapImagesInCards(html) {
   });
 }
 
+/** Convierte **negrilla** y *cursiva* sin parsear en HTML. */
+function fixRawMarkdownEmphasis(html) {
+  return html
+    .replace(/\*\*([^*<]+?)\*\*/g, "<strong>$1</strong>")
+    .replace(/__([^_<]+?)__/g, "<strong>$1</strong>")
+    .replace(/(?<![*_])\*([^*<\n]+?)\*(?![*_])/g, "<em>$1</em>");
+}
+
 export function enrichContentHtml(html) {
   if (!html) return "";
   let out = html;
   out = fixRawMarkdownImages(out);
   out = fixRawMarkdownHeadings(out);
+  out = fixRawMarkdownEmphasis(out);
   out = fixRawMarkdownLinks(out);
   out = enrichImageSources(out);
   out = wrapImagesInCards(out);
