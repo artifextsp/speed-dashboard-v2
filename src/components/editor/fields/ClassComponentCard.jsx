@@ -112,7 +112,7 @@ export function ClassComponentCard({
               value={component.content}
               onChange={(content) => onChange({ ...component, content })}
               height={360}
-              help="Texto enriquecido: formato, enlaces, imágenes (Drive se convierte automáticamente), videos y listas."
+              help="Texto enriquecido: formato, enlaces, imágenes en tarjeta, videos y listas. Los enters extra crean espacio vertical; usa ↕ en la barra para un espaciador."
               readOnly={readOnly}
             />
           </div>

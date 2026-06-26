@@ -72,11 +72,27 @@ function enrichImageSources(html) {
   );
 }
 
+/** Envuelve imágenes sueltas en tarjeta con marco y pie opcional. */
+function wrapImagesInCards(html) {
+  return html.replace(/<img([^>]*?)>/gi, (match, attrs) => {
+    if (/markdown-image-card__img/.test(match)) return match;
+    const altMatch = attrs.match(/alt=["']([^"']*)["']/i);
+    const alt = altMatch?.[1]?.trim() || "";
+    const img = `<img class="markdown-image-card__img"${attrs.replace(/\sclass=["'][^"']*["']/i, "")}>`;
+    const caption =
+      alt && alt.toLowerCase() !== "imagen"
+        ? `<figcaption class="markdown-image-card__caption">${alt}</figcaption>`
+        : "";
+    return `<figure class="markdown-image-card"><div class="markdown-image-card__frame">${img}</div>${caption}</figure>`;
+  });
+}
+
 export function enrichContentHtml(html) {
   if (!html) return "";
   let out = html;
   out = fixRawMarkdownLinks(out);
   out = enrichImageSources(out);
+  out = wrapImagesInCards(out);
   out = enrichYouTubeEmbeds(out);
   out = normalizeLinksInHtml(out);
   return out;

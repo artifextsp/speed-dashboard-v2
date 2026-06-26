@@ -1,6 +1,5 @@
 import MDEditor from "@uiw/react-md-editor";
 import * as commands from "@uiw/react-md-editor/commands";
-import rehypeRaw from "rehype-raw";
 import {
   extractYouTubeId,
   extractGoogleDriveFileId,
@@ -9,7 +8,7 @@ import {
   youtubeEmbedUrl,
   youtubeWatchUrl,
 } from "../../../kernel/urlUtils";
-import { MarkdownImage } from "../../preview/MarkdownImage";
+import { MarkdownContent } from "../../preview/MarkdownContent";
 import {
   IconAlignLeft,
   IconAlignCenter,
@@ -114,6 +113,16 @@ const fontSizeCommand = {
   },
 };
 
+const spacerCommand = {
+  name: "spacer",
+  keyCommand: "spacer",
+  buttonProps: { "aria-label": "Espacio vertical", title: "Espacio vertical" },
+  icon: <span style={{ fontSize: 11, fontWeight: 700, lineHeight: 1 }}>↕</span>,
+  execute: (state, api) => {
+    api.replaceSelection('\n<div class="markdown-spacer"></div>\n');
+  },
+};
+
 const EDITOR_COMMANDS = [
   commands.bold,
   commands.italic,
@@ -129,6 +138,7 @@ const EDITOR_COMMANDS = [
   commands.divider,
   linkCommand,
   imageCommand,
+  spacerCommand,
   youtubeCommand,
   commands.divider,
   makeAlignCommand("left", <IconAlignLeft size={13} />, "Alinear izquierda"),
@@ -154,35 +164,14 @@ export function RichEditor({ label, value, onChange, help, height = 320, readOnl
         preview={readOnly ? "preview" : "live"}
         visibleDragbar={false}
         hideToolbar={readOnly}
-        previewOptions={{
-          rehypePlugins: [rehypeRaw],
-          components: {
-            a: ({ href, children, ...props }) => (
-              <a href={normalizeUrl(href || "")} target="_blank" rel="noopener noreferrer" {...props}>
-                {children}
-              </a>
-            ),
-            img: ({ src, alt, className }) => (
-              <MarkdownImage src={src} alt={alt} className={className} />
-            ),
-            iframe: ({ src, title, ...props }) => {
-              const ytId = extractYouTubeId(src || "");
-              return (
-                <>
-                  <div className="markdown-embed markdown-embed--video">
-                    <iframe src={src} title={title || "Video"} {...props} />
-                  </div>
-                  {ytId ? (
-                    <p className="markdown-video-link">
-                      <a href={youtubeWatchUrl(ytId)} target="_blank" rel="noopener noreferrer">
-                        ▶ Abrir video en YouTube
-                      </a>
-                    </p>
-                  ) : null}
-                </>
-              );
-            },
-          },
+        components={{
+          preview: (source) => (
+            <div className="wmde-markdown-color" data-color-mode="light">
+              <div className="pv-markdown">
+                <MarkdownContent>{source}</MarkdownContent>
+              </div>
+            </div>
+          ),
         }}
       />
     </div>

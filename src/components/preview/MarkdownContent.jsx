@@ -2,11 +2,13 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
 import { normalizeUrl, extractYouTubeId, youtubeWatchUrl } from "../../kernel/urlUtils";
+import { prepareMarkdownForRender } from "../../kernel/markdownSpacing";
 import { friendlyLinkLabel } from "../../utils/enrichContentHtml";
 import { MarkdownImage } from "./MarkdownImage";
 
 export function MarkdownContent({ children }) {
   if (!children) return null;
+  const source = prepareMarkdownForRender(children);
   return (
     <ReactMarkdown
       remarkPlugins={[remarkGfm]}
@@ -31,9 +33,13 @@ export function MarkdownContent({ children }) {
             </a>
           );
         },
-        img: ({ src, alt, className }) => (
-          <MarkdownImage src={src} alt={alt} className={className} />
-        ),
+        img: ({ src, alt }) => <MarkdownImage src={src} alt={alt} />,
+        div: ({ className, ...props }) => {
+          if (className?.includes("markdown-spacer")) {
+            return <div className="markdown-spacer" aria-hidden="true" />;
+          }
+          return <div className={className} {...props} />;
+        },
         iframe: ({ src, title, ...props }) => {
           const ytId = extractYouTubeId(src || "");
           return (
@@ -57,7 +63,7 @@ export function MarkdownContent({ children }) {
         },
       }}
     >
-      {children}
+      {source}
     </ReactMarkdown>
   );
 }
