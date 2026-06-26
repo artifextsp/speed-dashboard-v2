@@ -1,6 +1,6 @@
 import { marked } from "marked";
 import { friendlyLinkLabel } from "../utils/enrichContentHtml.js";
-import { normalizeUrl, extractYouTubeId, youtubeWatchUrl } from "./urlUtils";
+import { normalizeUrl, extractYouTubeId, youtubeWatchUrl, resolveImageUrl } from "./urlUtils";
 
 const MD_LINK_IN_TEXT_RE = /\[([^\]]+)\]\(([^)]+)\)/g;
 
@@ -156,7 +156,7 @@ function parseInline(tokens) {
       case "image": {
         parts.push({
           type: "image",
-          src: normalizeUrl(token.href),
+          src: resolveImageUrl(token.href),
           alt: token.text || "Imagen",
         });
         break;
@@ -189,7 +189,7 @@ function parseHtml(html) {
   while ((match = imgRe.exec(html)) !== null) {
     blocks.push({
       type: "image",
-      src: normalizeUrl(match[1]),
+      src: resolveImageUrl(match[1]),
       alt: match[2]?.trim() || "Imagen",
     });
   }

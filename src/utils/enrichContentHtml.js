@@ -1,4 +1,4 @@
-import { normalizeUrl, extractYouTubeId, youtubeWatchUrl } from "../kernel/urlUtils";
+import { normalizeUrl, extractYouTubeId, youtubeWatchUrl, resolveImageUrl } from "../kernel/urlUtils";
 
 /** Texto visible del enlace: evita mostrar URLs crudas como etiqueta. */
 export function friendlyLinkLabel(text, href) {
@@ -59,10 +59,24 @@ function enrichYouTubeEmbeds(html) {
   });
 }
 
+/** Reescribe src de imágenes (p. ej. enlaces /view de Google Drive). */
+function enrichImageSources(html) {
+  return html.replace(
+    /<img([^>]*?)src=["']([^"']+)["']([^>]*)>/gi,
+    (match, before, src, after) => {
+      const raw = src.replace(/&amp;/g, "&");
+      const resolved = resolveImageUrl(raw);
+      if (resolved === raw) return match;
+      return `<img${before}src="${resolved}"${after}>`;
+    }
+  );
+}
+
 export function enrichContentHtml(html) {
   if (!html) return "";
   let out = html;
   out = fixRawMarkdownLinks(out);
+  out = enrichImageSources(out);
   out = enrichYouTubeEmbeds(out);
   out = normalizeLinksInHtml(out);
   return out;

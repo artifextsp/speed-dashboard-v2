@@ -3,10 +3,13 @@ import * as commands from "@uiw/react-md-editor/commands";
 import rehypeRaw from "rehype-raw";
 import {
   extractYouTubeId,
+  extractGoogleDriveFileId,
   normalizeUrl,
+  resolveImageUrl,
   youtubeEmbedUrl,
   youtubeWatchUrl,
 } from "../../../kernel/urlUtils";
+import { MarkdownImage } from "../../preview/MarkdownImage";
 import {
   IconAlignLeft,
   IconAlignCenter,
@@ -50,10 +53,19 @@ const imageCommand = {
   buttonProps: { "aria-label": "Insertar imagen", title: "Insertar imagen" },
   icon: commands.image.icon,
   execute: (state, api) => {
-    const url = window.prompt("URL de la imagen");
+    const url = window.prompt(
+      "URL de la imagen (acepta enlaces de Google Drive con «Cualquier persona con el enlace»)"
+    );
     if (!url) return;
+    const normalized = normalizeUrl(url);
+    const resolved = resolveImageUrl(normalized);
     const alt = window.prompt("Descripción de la imagen", "Imagen") || "Imagen";
-    api.replaceSelection(`![${alt}](${normalizeUrl(url)})`);
+    if (extractGoogleDriveFileId(normalized)) {
+      window.alert(
+        "Enlace de Google Drive convertido al formato directo para que la imagen se pueda mostrar."
+      );
+    }
+    api.replaceSelection(`![${alt}](${resolved})`);
   },
 };
 
@@ -149,6 +161,9 @@ export function RichEditor({ label, value, onChange, help, height = 320, readOnl
               <a href={normalizeUrl(href || "")} target="_blank" rel="noopener noreferrer" {...props}>
                 {children}
               </a>
+            ),
+            img: ({ src, alt, className }) => (
+              <MarkdownImage src={src} alt={alt} className={className} />
             ),
             iframe: ({ src, title, ...props }) => {
               const ytId = extractYouTubeId(src || "");

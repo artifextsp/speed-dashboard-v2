@@ -3,6 +3,7 @@ import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
 import { normalizeUrl, extractYouTubeId, youtubeWatchUrl } from "../../kernel/urlUtils";
 import { friendlyLinkLabel } from "../../utils/enrichContentHtml";
+import { MarkdownImage } from "./MarkdownImage";
 
 export function MarkdownContent({ children }) {
   if (!children) return null;
@@ -30,6 +31,9 @@ export function MarkdownContent({ children }) {
             </a>
           );
         },
+        img: ({ src, alt, className }) => (
+          <MarkdownImage src={src} alt={alt} className={className} />
+        ),
         iframe: ({ src, title, ...props }) => {
           const ytId = extractYouTubeId(src || "");
           return (
