@@ -475,11 +475,29 @@ body {
 }
 
 /* ── Phase Grid ── */
-.phase-grid {
-  display: flex;
-  gap: 12px;
+.phase-section {
   margin-bottom: 24px;
+}
+
+.phase-section__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
   flex-wrap: wrap;
+}
+
+.phase-section__heading {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.phase-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
 }
 
 .phase-card {
@@ -492,8 +510,9 @@ body {
   border-radius: var(--radius-lg);
   border: 1px solid;
   transition: box-shadow 0.15s, border-color 0.15s;
-  flex: 1 1 0;
-  min-width: 180px;
+  width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
 }
 
 .phase-card:hover {
@@ -525,6 +544,10 @@ body {
 .phase-card__title {
   font-size: 16px;
   font-weight: 500;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .phase-card__subtitle {
@@ -564,8 +587,7 @@ body {
 
 .phase-card-wrap {
   position: relative;
-  flex: 1 1 0;
-  min-width: 180px;
+  min-width: 0;
 }
 
 .phase-card-wrap--active .phase-card {
@@ -604,45 +626,7 @@ body {
 }
 
 .phase-card--unassigned {
-  flex: 1 1 0;
-  min-width: 160px;
-}
-
-.phase-card--add {
-  all: unset;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 20px;
-  border-radius: var(--radius-lg);
-  border: 2px dashed var(--color-border);
-  background: transparent;
-  flex: 0 1 160px;
-  min-width: 140px;
-  min-height: 120px;
-  transition: border-color 0.15s, background 0.15s;
-}
-
-.phase-card--add:hover {
-  border-color: var(--color-text-tertiary);
-  background: var(--color-bg-secondary);
-}
-
-.phase-card--add__icon {
-  font-size: 28px;
-  font-weight: 300;
-  color: var(--color-text-secondary);
-  line-height: 1;
-}
-
-.phase-card--add__label {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--color-text-secondary);
-  text-align: center;
+  min-width: 0;
 }
 
 .color-picker-row {
@@ -1497,7 +1481,7 @@ body {
 
 @media (max-width: 768px) {
   .phase-grid {
-    flex-direction: column;
+    grid-template-columns: 1fr;
   }
 
   .stats-bar {

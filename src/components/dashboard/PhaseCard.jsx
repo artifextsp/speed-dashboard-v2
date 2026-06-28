@@ -101,12 +101,3 @@ export function UnassignedBlockCard({ sessions, isActive, onSelect }) {
     </button>
   );
 }
-
-export function AddBlockCard({ onClick }) {
-  return (
-    <button type="button" className="phase-card phase-card--add" onClick={onClick}>
-      <span className="phase-card--add__icon">+</span>
-      <span className="phase-card--add__label">Bloque Didáctico</span>
-    </button>
-  );
-}

@@ -6,7 +6,6 @@ import { sortSessionsByDate } from "../../kernel/sortByDate";
 import {
   PhaseCard,
   UnassignedBlockCard,
-  AddBlockCard,
 } from "./PhaseCard";
 import { PhaseMetaModal } from "./PhaseMetaModal";
 import { SessionRow } from "./SessionRow";
@@ -182,28 +181,39 @@ export function DashboardView({
         />
       )}
 
-      <div className="phase-grid">
-        {sortedPhases.map((p) => (
-          <PhaseCard
-            key={p.id}
-            phase={p}
-            sessions={sessionsByPhase[p.id] || []}
-            isActive={selectedPhase === p.id}
-            onSelect={() => togglePhaseFilter(p.id)}
-            onEdit={(phase) => setPhaseModal({ mode: "edit", phase })}
-            canEdit={permissions.canEdit}
-          />
-        ))}
-        {unassignedSessions.length > 0 && (
-          <UnassignedBlockCard
-            sessions={unassignedSessions}
-            isActive={selectedPhase === UNASSIGNED_BLOCK_FILTER}
-            onSelect={() => togglePhaseFilter(UNASSIGNED_BLOCK_FILTER)}
-          />
-        )}
-        {permissions.canEdit && (
-          <AddBlockCard onClick={() => setPhaseModal({ mode: "create" })} />
-        )}
+      <div className="phase-section">
+        <div className="phase-section__toolbar">
+          <span className="phase-section__heading">Bloques didácticos</span>
+          {permissions.canEdit && (
+            <button
+              type="button"
+              className="btn btn--secondary"
+              onClick={() => setPhaseModal({ mode: "create" })}
+            >
+              <IconPlus size={16} /> Bloque didáctico
+            </button>
+          )}
+        </div>
+        <div className="phase-grid">
+          {sortedPhases.map((p) => (
+            <PhaseCard
+              key={p.id}
+              phase={p}
+              sessions={sessionsByPhase[p.id] || []}
+              isActive={selectedPhase === p.id}
+              onSelect={() => togglePhaseFilter(p.id)}
+              onEdit={(phase) => setPhaseModal({ mode: "edit", phase })}
+              canEdit={permissions.canEdit}
+            />
+          ))}
+          {unassignedSessions.length > 0 && (
+            <UnassignedBlockCard
+              sessions={unassignedSessions}
+              isActive={selectedPhase === UNASSIGNED_BLOCK_FILTER}
+              onSelect={() => togglePhaseFilter(UNASSIGNED_BLOCK_FILTER)}
+            />
+          )}
+        </div>
       </div>
 
       <div className="session-list">
