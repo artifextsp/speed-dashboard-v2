@@ -8,6 +8,10 @@ import { SessionEditor } from "./components/editor/SessionEditor";
 import { Toast } from "./components/ui/Toast";
 import { getClassPermissions } from "./kernel/permissions";
 import { downloadSessionPdf } from "./utils/sessionPdfExporter";
+import {
+  downloadSyllabusDocx,
+  downloadSyllabusPdf,
+} from "./utils/syllabusExporter";
 
 export default function App() {
   const { user, loading: authLoading, signIn, signUp, signOut, changePassword } = useAuth();
@@ -90,6 +94,38 @@ export default function App() {
     [phases, getVideos, showToast]
   );
 
+  const handleExportSyllabusPdf = useCallback(
+    async (phaseFilterId) => {
+      try {
+        const filename = await downloadSyllabusPdf({
+          phases,
+          sessions,
+          phaseFilterId,
+        });
+        showToast(`Temario PDF descargado: ${filename}`);
+      } catch (err) {
+        showToast(err.message || "Error al exportar el temario PDF", true);
+      }
+    },
+    [phases, sessions, showToast]
+  );
+
+  const handleExportSyllabusDocx = useCallback(
+    async (phaseFilterId) => {
+      try {
+        const filename = await downloadSyllabusDocx({
+          phases,
+          sessions,
+          phaseFilterId,
+        });
+        showToast(`Temario Word descargado: ${filename}`);
+      } catch (err) {
+        showToast(err.message || "Error al exportar el temario DOCX", true);
+      }
+    },
+    [phases, sessions, showToast]
+  );
+
   if (authLoading) {
     return <div className="loading-screen">Cargando...</div>;
   }
@@ -149,6 +185,8 @@ export default function App() {
           }
           onDeleteSession={(id) => deleteSession(id, user?.email)}
           onDownloadPdf={handleDownloadPdf}
+          onExportSyllabusPdf={handleExportSyllabusPdf}
+          onExportSyllabusDocx={handleExportSyllabusDocx}
         />
       ) : null}
     </div>

@@ -6,6 +6,7 @@ import { sortSessionsByDate } from "../../kernel/sortByDate";
 import { PhaseCard } from "./PhaseCard";
 import { SessionRow } from "./SessionRow";
 import { SessionMetaModal } from "./SessionMetaModal";
+import { SyllabusExportButtons } from "./SyllabusExportButtons";
 import { StatsBar } from "./StatsBar";
 import { ChangePasswordModal } from "../ui/ChangePasswordModal";
 import { PublishButton } from "../publish/PublishButton";
@@ -22,6 +23,8 @@ export function DashboardView({
   onUpdateSessionMetadata,
   onDeleteSession,
   onDownloadPdf,
+  onExportSyllabusPdf,
+  onExportSyllabusDocx,
 }) {
   const [selectedPhase, setSelectedPhase] = useState(null);
   const [showChangePassword, setShowChangePassword] = useState(false);
@@ -149,15 +152,24 @@ export function DashboardView({
               ? `Clases — Fase ${phaseFilterLabel} (ordenadas por fecha)`
               : "Temario completo (ordenado por fecha)"}
           </span>
-          {permissions.canEdit && (
-            <button
-              type="button"
-              className="btn btn--primary"
-              onClick={() => setMetaModal({ mode: "create" })}
-            >
-              <IconPlus size={16} /> Nueva clase
-            </button>
-          )}
+          <div className="session-list__toolbar-actions">
+            {permissions.canDownloadPdf && (
+              <SyllabusExportButtons
+                disabled={filteredSessions.length === 0}
+                onExportPdf={() => onExportSyllabusPdf?.(selectedPhase)}
+                onExportDocx={() => onExportSyllabusDocx?.(selectedPhase)}
+              />
+            )}
+            {permissions.canEdit && (
+              <button
+                type="button"
+                className="btn btn--primary"
+                onClick={() => setMetaModal({ mode: "create" })}
+              >
+                <IconPlus size={16} /> Nueva clase
+              </button>
+            )}
+          </div>
         </div>
 
         {filteredSessions.map((s) => (

@@ -570,6 +570,38 @@ body {
   justify-content: space-between;
   gap: 12px;
   margin-bottom: 4px;
+  flex-wrap: wrap;
+}
+
+.session-list__toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.session-list__exports {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.btn--ghost {
+  background: transparent;
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border-tertiary);
+}
+
+.btn--ghost:hover:not(:disabled) {
+  background: var(--color-background-tertiary);
+  color: var(--color-text-primary);
+}
+
+.btn--compact {
+  padding: 7px 12px;
+  font-size: 13px;
+  gap: 6px;
 }
 
 .session-list__heading {
