@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback } from "react";
 import { IconArrowLeft, IconPencil, IconEye } from "@tabler/icons-react";
-import { PHASE_COLORS, MODALITY_LABELS, formatRelativeTime } from "../../utils/constants";
+import { MODALITY_LABELS, formatRelativeTime, getPhaseColor, getPhaseLabel } from "../../utils/constants";
 import { FieldInput } from "./fields/FieldInput";
 import { FieldArea } from "./fields/FieldArea";
 import { ComponentsEditor } from "./fields/ComponentsEditor";
@@ -25,7 +25,7 @@ export function SessionEditor({
   );
   const [showPreview, setShowPreview] = useState(false);
 
-  const color = PHASE_COLORS[phase?.code] || "#888";
+  const color = getPhaseColor(phase);
 
   const previewForm = useMemo(
     () => ({ ...form, class_components: components }),
@@ -107,7 +107,7 @@ export function SessionEditor({
         {form.title}
       </h2>
       <p className="editor__meta">
-        Fase {phase?.code} · {phase?.title} · {MODALITY_LABELS[form.modality]} ·{" "}
+        {phase ? getPhaseLabel(phase) : "Sin bloque"} · {MODALITY_LABELS[form.modality]} ·{" "}
         {form.scheduled_date}
       </p>
       {session.last_edited_by && (

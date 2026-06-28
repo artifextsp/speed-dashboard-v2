@@ -12,7 +12,7 @@ import {
   buildSyllabusOutline,
   getSyllabusExportBasename,
 } from "../kernel/syllabusOutline.js";
-import { PHASE_COLORS } from "./constants.js";
+import { getPhaseColor } from "./constants.js";
 
 function downloadBlob(blob, filename) {
   const url = URL.createObjectURL(blob);
@@ -74,14 +74,16 @@ function buildDocxChildren(outline) {
   ];
 
   for (const section of outline.sections) {
-    const phaseColor = hexToDocxColor(PHASE_COLORS[section.phaseCode] || "#534AB7");
+    const phaseColor = hexToDocxColor(
+      section.phaseColor || getPhaseColor({ code: section.phaseCode, color: section.phaseColor })
+    );
     children.push(
       new Paragraph({
         heading: HeadingLevel.HEADING_1,
         spacing: { before: 280, after: 120 },
         children: [
           new TextRun({
-            text: `Fase ${section.phaseCode} — ${section.phaseTitle}`,
+            text: section.phaseTitle,
             bold: true,
             color: phaseColor,
             size: 28,

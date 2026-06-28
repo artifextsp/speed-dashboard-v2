@@ -15,7 +15,7 @@ import {
 
 export default function App() {
   const { user, loading: authLoading, signIn, signUp, signOut, changePassword } = useAuth();
-  const { phases, error: phasesError } = usePhases(user);
+  const { phases, error: phasesError, createPhase, updatePhase, deletePhase } = usePhases(user);
   const {
     sessions,
     loading: sessionsLoading,
@@ -192,6 +192,9 @@ export default function App() {
           onDownloadPdf={handleDownloadPdf}
           onExportSyllabusPdf={handleExportSyllabusPdf}
           onExportSyllabusDocx={handleExportSyllabusDocx}
+          onCreatePhase={(data) => createPhase(data)}
+          onUpdatePhase={(data) => updatePhase(data)}
+          onDeletePhase={(id) => deletePhase(id)}
         />
       ) : null}
     </div>

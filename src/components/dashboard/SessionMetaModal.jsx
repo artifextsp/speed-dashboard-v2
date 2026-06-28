@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { IconX } from "@tabler/icons-react";
-import { MODALITY_LABELS } from "../../utils/constants";
-import { PHASE_COLORS } from "../../utils/constants";
+import { MODALITY_LABELS, getPhaseColor, getPhaseLabel } from "../../utils/constants";
 import { getDateInputValue } from "../../kernel/sortByDate";
 
 const SESSION_TYPES = [
@@ -127,8 +126,8 @@ export function SessionMetaModal({
         </div>
 
         <p className="modal-hint">
-          Define la clase en el temario: fase, fecha y tipo. El listado se ordena
-          automáticamente por fecha.
+          Define la clase en el temario: bloque didáctico (opcional), fecha y tipo.
+          El listado se ordena automáticamente por fecha.
         </p>
 
         <form onSubmit={handleSubmit}>
@@ -142,17 +141,16 @@ export function SessionMetaModal({
             required
           />
 
-          <label className="field__label">Fase ADCE *</label>
+          <label className="field__label">Bloque didáctico</label>
           <select
             className="input"
             value={form.phase_id}
             onChange={(e) => set("phase_id")(e.target.value)}
-            required
           >
-            <option value="">Selecciona una fase</option>
+            <option value="">Sin bloque (clase independiente)</option>
             {sortedPhases.map((p) => (
               <option key={p.id} value={p.id}>
-                Fase {p.code} — {p.title}
+                {p.sort_order ?? p.phase_number}. {p.title}
               </option>
             ))}
           </select>
@@ -160,9 +158,9 @@ export function SessionMetaModal({
           {selectedPhase && (
             <p
               className="field__help"
-              style={{ color: PHASE_COLORS[selectedPhase.code] }}
+              style={{ color: getPhaseColor(selectedPhase) }}
             >
-              {selectedPhase.subtitle}
+              {selectedPhase.subtitle || getPhaseLabel(selectedPhase)}
             </p>
           )}
 
@@ -232,13 +230,13 @@ export function SessionMetaModal({
             placeholder="2 horas"
           />
 
-          <label className="field__label">Objetivo de aprendizaje</label>
+          <label className="field__label">Descripción / objetivo</label>
           <textarea
             className="input input--area"
             rows={2}
             value={form.learning_goal}
             onChange={(e) => set("learning_goal")(e.target.value)}
-            placeholder="Lo que vas a lograr hoy (opcional)"
+            placeholder="Breve descripción visible en la tarjeta del temario (opcional)"
           />
 
           {error && <p className="login-error">{error}</p>}

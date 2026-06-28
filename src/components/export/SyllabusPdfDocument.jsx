@@ -1,5 +1,5 @@
 import { Document, Page, Text, View, Image, StyleSheet } from "@react-pdf/renderer";
-import { PHASE_COLORS } from "../../utils/constants";
+import { getPhaseColor } from "../../utils/constants";
 import { PDF_LOGO_SOURCES } from "../../utils/siteAssets.js";
 
 const SPEED_ORANGE = "#D85A30";
@@ -166,12 +166,12 @@ export function SyllabusPdfDocument({ outline }) {
         </Text>
 
         {outline.sections.map((section) => {
-          const phaseColor = PHASE_COLORS[section.phaseCode] || "#534AB7";
+          const phaseColor = section.phaseColor || getPhaseColor({ code: section.phaseCode, color: section.phaseColor });
           return (
-            <View key={section.phaseId} style={styles.phaseSection}>
+            <View key={section.phaseId || "unassigned"} style={styles.phaseSection}>
               <View style={[styles.phaseHeader, { borderLeftColor: phaseColor }]}>
                 <Text style={[styles.phaseTitle, { color: phaseColor }]}>
-                  Fase {section.phaseCode} — {section.phaseTitle}
+                  {section.phaseTitle}
                 </Text>
                 {section.phaseSubtitle ? (
                   <Text style={styles.phaseSubtitle}>{section.phaseSubtitle}</Text>

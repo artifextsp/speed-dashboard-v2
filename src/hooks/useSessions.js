@@ -147,7 +147,6 @@ export function useSessions(user) {
   const createSession = async (metadata, userEmail) => {
     const title = metadata.title?.trim();
     if (!title) throw new Error("El título es obligatorio");
-    if (!metadata.phase_id) throw new Error("Selecciona una fase");
     if (!metadata.scheduled_date_iso) throw new Error("La fecha es obligatoria");
 
     const maxOrder = sessions.reduce(
@@ -158,7 +157,7 @@ export function useSessions(user) {
     const dateFields = buildDateFields(metadata.scheduled_date_iso, null);
 
     const insertData = {
-      phase_id: metadata.phase_id,
+      phase_id: metadata.phase_id || null,
       title,
       modality: metadata.modality || "virtual",
       session_type: metadata.session_type || "sesion",
@@ -197,12 +196,13 @@ export function useSessions(user) {
 
     const title = metadata.title?.trim();
     if (!title) throw new Error("El título es obligatorio");
-    if (!metadata.phase_id) throw new Error("Selecciona una fase");
     if (!metadata.scheduled_date_iso) throw new Error("La fecha es obligatoria");
 
     const updateData = {};
     for (const key of METADATA_FIELDS) {
-      if (key in metadata) updateData[key] = metadata[key];
+      if (key in metadata) {
+        updateData[key] = key === "phase_id" ? metadata[key] || null : metadata[key];
+      }
     }
 
     updateData.title = title;

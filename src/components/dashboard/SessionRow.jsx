@@ -10,8 +10,9 @@ import {
   IconDownload,
 } from "@tabler/icons-react";
 import {
-  PHASE_COLORS,
   MODALITY_LABELS,
+  getPhaseColor,
+  getPhaseLabel,
   getSessionProgress,
   formatRelativeTime,
 } from "../../utils/constants";
@@ -30,6 +31,13 @@ function getShortName(email) {
   return name.charAt(0).toUpperCase() + name.slice(1);
 }
 
+function truncateText(text, max = 140) {
+  if (!text) return "";
+  const clean = text.trim();
+  if (clean.length <= max) return clean;
+  return `${clean.slice(0, max).trim()}…`;
+}
+
 export function SessionRow({
   session,
   phase,
@@ -40,11 +48,13 @@ export function SessionRow({
   readOnly,
   canDownloadPdf = false,
 }) {
-  const color = PHASE_COLORS[phase?.code] || "#888";
+  const color = getPhaseColor(phase);
   const Icon = TYPE_ICON_MAP[session.session_type] || IconFile;
   const progress = useMemo(() => getSessionProgress(session), [session]);
   const editorName = getShortName(session.last_edited_by);
   const statusCfg = getStatusConfig(session.status);
+  const blockLabel = phase ? getPhaseLabel(phase) : "Sin bloque";
+  const description = truncateText(session.learning_goal);
 
   return (
     <div
@@ -66,8 +76,11 @@ export function SessionRow({
               : ""}
             {session.title}
           </div>
+          {description && (
+            <p className="session-row__description">{description}</p>
+          )}
           <div className="session-row__meta">
-            <span>Fase {phase?.code}</span>
+            <span>{blockLabel}</span>
             <span>·</span>
             <span>{MODALITY_LABELS[session.modality]}</span>
             <span>·</span>
@@ -133,7 +146,7 @@ export function SessionRow({
           <button
             type="button"
             className="btn-icon session-row__action"
-            title="Editar fase, fecha y datos"
+            title="Editar bloque, fecha y datos"
             onClick={(e) => {
               e.stopPropagation();
               onEditMeta?.(session);

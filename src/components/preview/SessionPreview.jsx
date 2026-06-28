@@ -7,7 +7,7 @@ import {
   IconChevronRight,
   IconLayersLinked,
 } from "@tabler/icons-react";
-import { PHASE_COLORS, MODALITY_LABELS } from "../../utils/constants";
+import { getPhaseColor, MODALITY_LABELS } from "../../utils/constants";
 import { resolveClassComponents } from "../../kernel/legacyMigration";
 import { withDisplayNumbers } from "../../kernel/componentManager";
 import { getStatusConfig } from "../../kernel/statusManager";
@@ -37,7 +37,7 @@ function AccordionSection({ number, title, description, color, children, default
 }
 
 export function SessionPreview({ form, phase, videos = [], onBack }) {
-  const phaseColor = PHASE_COLORS[phase?.code] || "#888";
+  const phaseColor = getPhaseColor(phase);
   const statusCfg = getStatusConfig(form.status);
   const theme = statusCfg.preview || {
     bg: statusCfg.bg,

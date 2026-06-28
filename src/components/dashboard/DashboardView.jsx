@@ -1,9 +1,14 @@
 import { useState, useMemo } from "react";
 import { IconLogout, IconEye, IconKey, IconPlus } from "@tabler/icons-react";
-import { PHASE_COLORS } from "../../utils/constants";
+import { PHASE_COLORS, UNASSIGNED_BLOCK_FILTER } from "../../utils/constants";
 import { getClassPermissions } from "../../kernel/permissions";
 import { sortSessionsByDate } from "../../kernel/sortByDate";
-import { PhaseCard } from "./PhaseCard";
+import {
+  PhaseCard,
+  UnassignedBlockCard,
+  AddBlockCard,
+} from "./PhaseCard";
+import { PhaseMetaModal } from "./PhaseMetaModal";
 import { SessionRow } from "./SessionRow";
 import { SessionMetaModal } from "./SessionMetaModal";
 import { SyllabusExportButtons } from "./SyllabusExportButtons";
@@ -25,31 +30,54 @@ export function DashboardView({
   onDownloadPdf,
   onExportSyllabusPdf,
   onExportSyllabusDocx,
+  onCreatePhase,
+  onUpdatePhase,
+  onDeletePhase,
 }) {
   const [selectedPhase, setSelectedPhase] = useState(null);
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [metaModal, setMetaModal] = useState(null);
+  const [phaseModal, setPhaseModal] = useState(null);
   const isSupervisor = user?.role === "supervisor";
   const isAdmin = user?.role === "admin";
   const permissions = getClassPermissions(user?.role);
+
+  const sortedPhases = useMemo(
+    () =>
+      [...phases].sort(
+        (a, b) =>
+          (a.sort_order ?? a.phase_number ?? 0) -
+          (b.sort_order ?? b.phase_number ?? 0)
+      ),
+    [phases]
+  );
 
   const sortedSessions = useMemo(
     () => sortSessionsByDate(sessions),
     [sessions]
   );
 
+  const unassignedSessions = useMemo(
+    () => sortedSessions.filter((s) => !s.phase_id),
+    [sortedSessions]
+  );
+
   const sessionsByPhase = useMemo(() => {
     const map = {};
-    phases.forEach((p) => (map[p.id] = []));
+    phases.forEach((p) => {
+      map[p.id] = [];
+    });
     sortedSessions.forEach((s) => {
-      if (map[s.phase_id]) map[s.phase_id].push(s);
+      if (s.phase_id && map[s.phase_id]) map[s.phase_id].push(s);
     });
     return map;
   }, [phases, sortedSessions]);
 
-  const filteredSessions = selectedPhase
-    ? sortedSessions.filter((s) => s.phase_id === selectedPhase)
-    : sortedSessions;
+  const filteredSessions = useMemo(() => {
+    if (!selectedPhase) return sortedSessions;
+    if (selectedPhase === UNASSIGNED_BLOCK_FILTER) return unassignedSessions;
+    return sortedSessions.filter((s) => s.phase_id === selectedPhase);
+  }, [selectedPhase, sortedSessions, unassignedSessions]);
 
   const handleDelete = async (session) => {
     const label = session.session_number
@@ -77,9 +105,32 @@ export function DashboardView({
     }
   };
 
-  const phaseFilterLabel = selectedPhase
-    ? phases.find((p) => p.id === selectedPhase)?.code
-    : null;
+  const handlePhaseSave = async (form) => {
+    if (phaseModal?.mode === "create") {
+      await onCreatePhase(form);
+      onPublishResult?.("Bloque didáctico creado", false);
+    } else {
+      await onUpdatePhase(form);
+      onPublishResult?.("Bloque didáctico actualizado", false);
+    }
+  };
+
+  const handlePhaseDelete = async (phaseId) => {
+    await onDeletePhase(phaseId);
+    if (selectedPhase === phaseId) setSelectedPhase(null);
+    onPublishResult?.("Bloque eliminado. Las clases quedaron sin bloque.", false);
+  };
+
+  const togglePhaseFilter = (phaseId) => {
+    setSelectedPhase((current) => (current === phaseId ? null : phaseId));
+  };
+
+  const blockFilterLabel = useMemo(() => {
+    if (!selectedPhase) return null;
+    if (selectedPhase === UNASSIGNED_BLOCK_FILTER) return "Sin bloque";
+    const phase = phases.find((p) => p.id === selectedPhase);
+    return phase?.title || null;
+  }, [selectedPhase, phases]);
 
   return (
     <div className="dashboard">
@@ -132,24 +183,34 @@ export function DashboardView({
       )}
 
       <div className="phase-grid">
-        {phases.map((p) => (
+        {sortedPhases.map((p) => (
           <PhaseCard
             key={p.id}
             phase={p}
             sessions={sessionsByPhase[p.id] || []}
             isActive={selectedPhase === p.id}
-            onSelect={() =>
-              setSelectedPhase(selectedPhase === p.id ? null : p.id)
-            }
+            onSelect={() => togglePhaseFilter(p.id)}
+            onEdit={(phase) => setPhaseModal({ mode: "edit", phase })}
+            canEdit={permissions.canEdit}
           />
         ))}
+        {unassignedSessions.length > 0 && (
+          <UnassignedBlockCard
+            sessions={unassignedSessions}
+            isActive={selectedPhase === UNASSIGNED_BLOCK_FILTER}
+            onSelect={() => togglePhaseFilter(UNASSIGNED_BLOCK_FILTER)}
+          />
+        )}
+        {permissions.canEdit && (
+          <AddBlockCard onClick={() => setPhaseModal({ mode: "create" })} />
+        )}
       </div>
 
       <div className="session-list">
         <div className="session-list__toolbar">
           <span className="session-list__heading">
-            {phaseFilterLabel
-              ? `Clases — Fase ${phaseFilterLabel} (ordenadas por fecha)`
+            {blockFilterLabel
+              ? `Clases — ${blockFilterLabel} (ordenadas por fecha)`
               : "Temario completo (ordenado por fecha)"}
           </span>
           <div className="session-list__toolbar-actions">
@@ -193,10 +254,22 @@ export function DashboardView({
         <SessionMetaModal
           mode={metaModal.mode}
           session={metaModal.session}
-          phases={phases}
+          phases={sortedPhases}
           sessions={sessions}
           onClose={() => setMetaModal(null)}
           onSave={handleMetaSave}
+        />
+      )}
+
+      {phaseModal && (
+        <PhaseMetaModal
+          mode={phaseModal.mode}
+          phase={phaseModal.phase}
+          phases={sortedPhases}
+          sessions={sessions}
+          onClose={() => setPhaseModal(null)}
+          onSave={handlePhaseSave}
+          onDelete={handlePhaseDelete}
         />
       )}
     </div>

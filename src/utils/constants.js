@@ -12,6 +12,37 @@ export const PHASE_BG = {
   E: "#E6F1FB",
 };
 
+/** Color temático del bloque didáctico (BD primero, fallback ADCE). */
+export function getPhaseColor(phase) {
+  if (!phase) return "#888888";
+  if (phase.color) return phase.color;
+  return PHASE_COLORS[phase.code] || "#888888";
+}
+
+/** Fondo suave para tarjetas de bloque. */
+export function getPhaseBg(phase) {
+  if (!phase) return "#f5f5f0";
+  if (phase.code && PHASE_BG[phase.code]) return PHASE_BG[phase.code];
+  const color = getPhaseColor(phase);
+  return `color-mix(in srgb, ${color} 12%, white)`;
+}
+
+/** Etiqueta corta para listados (nº de secuencia o código). */
+export function getPhaseBadge(phase) {
+  if (!phase) return null;
+  if (phase.code && phase.code.length <= 3) return phase.code;
+  const order = phase.sort_order ?? phase.phase_number;
+  return order != null ? String(order) : "·";
+}
+
+/** Nombre legible del bloque didáctico. */
+export function getPhaseLabel(phase) {
+  if (!phase) return null;
+  return phase.title || `Bloque ${phase.sort_order ?? phase.phase_number ?? ""}`.trim();
+}
+
+export const UNASSIGNED_BLOCK_FILTER = "__none__";
+
 export const MODALITY_LABELS = {
   virtual: "Virtual",
   presencial: "Presencial",

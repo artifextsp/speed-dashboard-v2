@@ -7,7 +7,7 @@ import {
   Image,
   StyleSheet,
 } from "@react-pdf/renderer";
-import { MODALITY_LABELS, PHASE_COLORS } from "../../utils/constants";
+import { MODALITY_LABELS, getPhaseColor } from "../../utils/constants";
 import { resolveClassComponents } from "../../kernel/legacyMigration";
 import { withDisplayNumbers } from "../../kernel/componentManager";
 import { getStatusConfig } from "../../kernel/statusManager";
@@ -449,7 +449,7 @@ function ComponentSection({ component, phaseColor }) {
 }
 
 export function SessionPdfDocument({ session, phase, videos = [] }) {
-  const phaseColor = PHASE_COLORS[phase?.code] || "#534AB7";
+  const phaseColor = getPhaseColor(phase);
   const statusCfg = getStatusConfig(session.status);
   const components = withDisplayNumbers(resolveClassComponents(session));
 

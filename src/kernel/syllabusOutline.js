@@ -1,4 +1,5 @@
 import { sortSessionsByDate } from "./sortByDate.js";
+import { UNASSIGNED_BLOCK_FILTER } from "../utils/constants.js";
 
 export function formatSessionTopicLabel(session) {
   if (session.session_number) {
@@ -12,9 +13,12 @@ export function buildSyllabusOutline({ phases, sessions, phaseFilterId = null })
     (a, b) => (a.sort_order ?? a.phase_number) - (b.sort_order ?? b.phase_number)
   );
   const sortedSessions = sortSessionsByDate(sessions);
-  const filtered = phaseFilterId
-    ? sortedSessions.filter((session) => session.phase_id === phaseFilterId)
-    : sortedSessions;
+  const filtered =
+    phaseFilterId === UNASSIGNED_BLOCK_FILTER
+      ? sortedSessions.filter((session) => !session.phase_id)
+      : phaseFilterId
+        ? sortedSessions.filter((session) => session.phase_id === phaseFilterId)
+        : sortedSessions;
 
   const sections = sortedPhases
     .map((phase) => {
@@ -33,19 +37,54 @@ export function buildSyllabusOutline({ phases, sessions, phaseFilterId = null })
         phaseCode: phase.code,
         phaseTitle: phase.title,
         phaseSubtitle: phase.subtitle || null,
+        phaseColor: phase.color || null,
         items,
       };
     })
     .filter(Boolean);
 
-  const activePhase = phaseFilterId
-    ? sortedPhases.find((phase) => phase.id === phaseFilterId)
-    : null;
+  if (!phaseFilterId || phaseFilterId === UNASSIGNED_BLOCK_FILTER) {
+    const unassignedItems = filtered
+      .filter((session) => !session.phase_id)
+      .map((session) => ({
+        id: session.id,
+        label: formatSessionTopicLabel(session),
+        description: session.learning_goal?.trim() || null,
+      }));
+
+    if (unassignedItems.length > 0 && phaseFilterId !== UNASSIGNED_BLOCK_FILTER) {
+      sections.push({
+        phaseId: null,
+        phaseCode: null,
+        phaseTitle: "Sin bloque didáctico",
+        phaseSubtitle: "Clases no agrupadas",
+        phaseColor: "#888888",
+        items: unassignedItems,
+      });
+    } else if (phaseFilterId === UNASSIGNED_BLOCK_FILTER && unassignedItems.length > 0) {
+      sections.length = 0;
+      sections.push({
+        phaseId: null,
+        phaseCode: null,
+        phaseTitle: "Sin bloque didáctico",
+        phaseSubtitle: "Clases no agrupadas",
+        phaseColor: "#888888",
+        items: unassignedItems,
+      });
+    }
+  }
+
+  const activePhase =
+    phaseFilterId && phaseFilterId !== UNASSIGNED_BLOCK_FILTER
+      ? sortedPhases.find((phase) => phase.id === phaseFilterId)
+      : null;
 
   return {
     title: activePhase
-      ? `Temario — Fase ${activePhase.code} ${activePhase.title}`
-      : "Temario completo del curso",
+      ? `Temario — ${activePhase.title}`
+      : phaseFilterId === UNASSIGNED_BLOCK_FILTER
+        ? "Temario — Sin bloque didáctico"
+        : "Temario completo del curso",
     subtitle: "Piloto de robótica educativa · Proyecto SPEED · Uniminuto 2026",
     sections,
     sessionCount: filtered.length,

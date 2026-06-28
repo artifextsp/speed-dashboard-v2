@@ -1,6 +1,6 @@
 import siteCss from "../../public/site-template/site.css?raw";
 import siteJs from "../../public/site-template/site.js?raw";
-import { PHASE_COLORS, MODALITY_LABELS } from "./constants";
+import { getPhaseColor, MODALITY_LABELS } from "./constants";
 import { resolveClassComponents } from "../kernel/legacyMigration";
 import { withDisplayNumbers } from "../kernel/componentManager";
 import {
@@ -137,7 +137,7 @@ function renderComponentsHtml(session, phaseColor) {
 }
 
 function renderSessionPage(session, phase) {
-  const phaseColor = PHASE_COLORS[phase?.code] || "#888";
+  const phaseColor = getPhaseColor(phase);
   const statusCfg = getStatusConfig(session.status);
   const theme = statusCfg.preview || {
     bg: statusCfg.bg,
@@ -274,7 +274,7 @@ function renderIndexPage(phases, allSessions) {
       );
       if (phaseSessions.length === 0) return "";
 
-      const color = PHASE_COLORS[phase.code] || "#888";
+      const color = getPhaseColor(phase);
       const items = phaseSessions.map(renderIndexSessionItem).join("");
 
       return `<section class="site-phase">
