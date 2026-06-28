@@ -62,19 +62,23 @@ export default function App() {
     [getVideos]
   );
 
-  const handleSave = async (formData) => {
+  const handleSave = async (formData, options = {}) => {
+    const { silent = false } = options;
     if (getClassPermissions(user?.role).readOnly) {
-      showToast("No tienes permiso para editar clases", true);
-      return;
+      if (!silent) showToast("No tienes permiso para editar clases", true);
+      return false;
     }
     setSaving(true);
     try {
-      await saveSession(formData, [], user?.email);
+      await saveSession(formData, editingVideos, user?.email);
       setEditingSession({ ...formData });
-      setEditingVideos([]);
-      showToast("Sesión guardada correctamente");
+      if (!silent) {
+        showToast("Sesión guardada correctamente");
+      }
+      return true;
     } catch (err) {
       showToast(err.message || "Error al guardar", true);
+      return false;
     } finally {
       setSaving(false);
     }
@@ -161,6 +165,7 @@ export default function App() {
       {editingSession && !loadingEditor ? (
         <div className="container">
           <SessionEditor
+            key={editingSession.id}
             session={editingSession}
             phase={phases.find((p) => p.id === editingSession.phase_id)}
             videos={editingVideos}

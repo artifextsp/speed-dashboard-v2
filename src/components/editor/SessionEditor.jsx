@@ -1,13 +1,14 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { IconArrowLeft, IconPencil, IconEye } from "@tabler/icons-react";
 import { PHASE_COLORS, MODALITY_LABELS, formatRelativeTime } from "../../utils/constants";
-import { resolveClassComponents } from "../../kernel/legacyMigration";
 import { FieldInput } from "./fields/FieldInput";
 import { FieldArea } from "./fields/FieldArea";
 import { ComponentsEditor } from "./fields/ComponentsEditor";
 import { ClassStatusControl } from "./fields/ClassStatusControl";
 import { SessionPreview } from "../preview/SessionPreview";
 import { DownloadPdfButton } from "../export/DownloadPdfButton";
+import { SessionSaveStatus } from "./SessionSaveStatus";
+import { useSessionAutoSave } from "../../hooks/useSessionAutoSave";
 
 export function SessionEditor({
   session,
@@ -31,8 +32,30 @@ export function SessionEditor({
     [form, components]
   );
 
-  const set = (key) => (val) => setForm({ ...form, [key]: val });
-  const handleSave = () => onSave({ ...form, class_components: components });
+  const buildPayload = useCallback(
+    () => ({ ...form, class_components: components }),
+    [form, components]
+  );
+
+  const { saveStatus, isDirty, saveNow, confirmLeave } = useSessionAutoSave({
+    buildPayload,
+    onSave,
+    readOnly,
+    enabled: !readOnly,
+  });
+
+  const set = (key) => (val) => setForm((prev) => ({ ...prev, [key]: val }));
+
+  const requestBack = () => {
+    if (!confirmLeave()) return;
+    onBack();
+  };
+
+  const handleManualSave = async () => {
+    await saveNow();
+  };
+
+  const isSaving = saving || saveStatus === "saving";
 
   if (showPreview) {
     return (
@@ -48,16 +71,18 @@ export function SessionEditor({
   return (
     <div className="editor editor--dynamic">
       <div className="editor__toolbar">
-        <button className="btn-back" onClick={onBack}>
+        <button type="button" className="btn-back" onClick={requestBack}>
           <IconArrowLeft size={16} /> Volver
         </button>
         <div className="editor__toolbar-right">
+          {!readOnly && <SessionSaveStatus status={saveStatus} />}
           <DownloadPdfButton
             session={previewForm}
             phase={phase}
             videos={initialVideos}
           />
           <button
+            type="button"
             className="btn btn--secondary"
             onClick={() => setShowPreview(true)}
           >
@@ -70,6 +95,12 @@ export function SessionEditor({
           )}
         </div>
       </div>
+
+      {!readOnly && isDirty && saveStatus === "unsaved" && (
+        <p className="editor__autosave-hint">
+          Los cambios se guardan solos en unos segundos. También puedes usar «Guardar ahora».
+        </p>
+      )}
 
       <h2 className="editor__title" style={{ color }}>
         {form.session_number ? `Sesión ${form.session_number}: ` : ""}
@@ -92,7 +123,7 @@ export function SessionEditor({
           <h3 className="class-meta-card__title">Datos de la clase</h3>
           <ClassStatusControl
             status={form.status}
-            onChange={(status) => setForm({ ...form, status })}
+            onChange={(status) => setForm((prev) => ({ ...prev, status }))}
             readOnly={readOnly}
           />
           <div className="class-meta-card__grid">
@@ -135,17 +166,18 @@ export function SessionEditor({
       </div>
 
       <div className="editor__actions">
-        <button className="btn btn--secondary" onClick={onBack}>
+        <button type="button" className="btn btn--secondary" onClick={requestBack}>
           {readOnly ? "Cerrar" : "Cancelar"}
         </button>
         {!readOnly && (
           <button
+            type="button"
             className="btn btn--primary"
-            onClick={handleSave}
-            disabled={saving}
+            onClick={handleManualSave}
+            disabled={isSaving}
             style={{ background: color }}
           >
-            {saving ? "Guardando..." : "Guardar cambios"}
+            {isSaving ? "Guardando..." : isDirty ? "Guardar ahora" : "Guardado"}
           </button>
         )}
       </div>

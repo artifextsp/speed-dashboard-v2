@@ -842,6 +842,48 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
+}
+
+.session-save-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.session-save-status--saved {
+  color: #1d7a50;
+  background: #e1f5ee;
+}
+
+.session-save-status--unsaved {
+  color: #9a6700;
+  background: #faeeda;
+}
+
+.session-save-status--saving {
+  color: #185fa5;
+  background: #e6f1fb;
+}
+
+.session-save-status--error {
+  color: #b42318;
+  background: #fee4e2;
+}
+
+.editor__autosave-hint {
+  margin: 0 0 12px;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  background: #faeeda;
+  color: #7a5c00;
+  font-size: 13px;
+  line-height: 1.45;
 }
 
 .editor__title {
