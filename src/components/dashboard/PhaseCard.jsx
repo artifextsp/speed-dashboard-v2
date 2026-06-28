@@ -39,8 +39,10 @@ export function PhaseCard({
             {phase.title}
           </span>
         </div>
-        {phase.subtitle && (
+        {phase.subtitle ? (
           <div className="phase-card__subtitle">{phase.subtitle}</div>
+        ) : (
+          <div className="phase-card__subtitle phase-card__subtitle--empty" aria-hidden="true" />
         )}
         <div className="phase-card__progress">
           <div className="progress-bar" style={{ background: `${color}22` }}>

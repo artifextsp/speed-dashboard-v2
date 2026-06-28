@@ -187,7 +187,7 @@ export function DashboardView({
           {permissions.canEdit && (
             <button
               type="button"
-              className="btn btn--secondary"
+              className="btn btn--primary"
               onClick={() => setPhaseModal({ mode: "create" })}
             >
               <IconPlus size={16} /> Bloque didáctico
