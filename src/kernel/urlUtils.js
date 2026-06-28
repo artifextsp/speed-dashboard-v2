@@ -10,6 +10,20 @@ export function normalizeUrl(url) {
   return `https://${trimmed}`;
 }
 
+/** Decodifica entidades HTML en URLs (p. ej. &amp; → &). */
+export function decodeHtmlEntities(text) {
+  if (!text) return text;
+  return String(text)
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"');
+}
+
+export function sanitizeImageSrc(src) {
+  return decodeHtmlEntities(normalizeUrl(src || ""));
+}
+
 export function extractYouTubeId(url) {
   if (!url) return null;
   const match = url.match(
@@ -62,19 +76,23 @@ export function extractGoogleDriveFileId(url) {
 export function googleDriveImageUrls(fileId) {
   return [
     `https://drive.google.com/thumbnail?id=${fileId}&sz=w1920`,
+    `https://lh3.googleusercontent.com/d/${fileId}=w1920`,
     `https://drive.google.com/uc?export=view&id=${fileId}`,
   ];
 }
 
+/** Lista de URLs a probar para una imagen (Drive u origen directo). */
+export function buildImageCandidates(src) {
+  const normalized = sanitizeImageSrc(src);
+  const driveId = extractGoogleDriveFileId(normalized);
+  if (driveId) return googleDriveImageUrls(driveId);
+  return [normalized];
+}
+
 /** Convierte enlaces de vista de Drive al formato embebible. */
 export function resolveImageUrl(url, preferIndex = 0) {
-  const normalized = normalizeUrl(url);
-  const driveId = extractGoogleDriveFileId(normalized);
-  if (driveId) {
-    const urls = googleDriveImageUrls(driveId);
-    return urls[preferIndex] ?? urls[0];
-  }
-  return normalized;
+  const candidates = buildImageCandidates(url);
+  return candidates[preferIndex] ?? candidates[0];
 }
 
 export function isGoogleDriveUrl(url) {

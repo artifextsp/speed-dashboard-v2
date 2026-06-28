@@ -1,4 +1,4 @@
-import { normalizeUrl, extractYouTubeId, youtubeWatchUrl, resolveImageUrl } from "../kernel/urlUtils";
+import { normalizeUrl, extractYouTubeId, youtubeWatchUrl, buildImageCandidates } from "../kernel/urlUtils";
 
 /** Texto visible del enlace: evita mostrar URLs crudas como etiqueta. */
 export function friendlyLinkLabel(text, href) {
@@ -44,13 +44,18 @@ function fixRawMarkdownLinks(html) {
 }
 
 function buildImageFigureHtml(alt, url) {
-  const src = resolveImageUrl(url.trim());
+  const candidates = buildImageCandidates(url.trim());
+  const src = candidates[0];
+  const fallbacks = candidates.slice(1);
   const safeAlt = alt.trim();
   const caption =
     safeAlt && safeAlt.toLowerCase() !== "imagen"
       ? `<figcaption class="markdown-image-card__caption">${safeAlt}</figcaption>`
       : "";
-  return `<figure class="markdown-image-card markdown-image-card--zoomable"><div class="markdown-image-card__frame" role="button" tabindex="0" aria-label="Ampliar imagen"><img class="markdown-image-card__img" src="${src}" alt="${safeAlt}" loading="lazy" referrerpolicy="no-referrer" /></div>${caption}</figure>`;
+  const fallbackAttr = fallbacks.length
+    ? ` data-fallbacks="${fallbacks.map((u) => encodeURIComponent(u)).join("|")}"`
+    : "";
+  return `<figure class="markdown-image-card markdown-image-card--zoomable"><div class="markdown-image-card__frame" role="button" tabindex="0" aria-label="Ampliar imagen"><img class="markdown-image-card__img"${fallbackAttr} src="${src}" alt="${safeAlt}" decoding="async" referrerpolicy="no-referrer" /></div>${caption}</figure>`;
 }
 
 /** Convierte ![alt](url) que quedó sin parsear. */
@@ -105,9 +110,13 @@ function enrichImageSources(html) {
     /<img([^>]*?)src=["']([^"']+)["']([^>]*)>/gi,
     (match, before, src, after) => {
       const raw = src.replace(/&amp;/g, "&");
-      const resolved = resolveImageUrl(raw);
-      if (resolved === raw) return match;
-      return `<img${before}src="${resolved}"${after}>`;
+      const candidates = buildImageCandidates(raw);
+      if (candidates.length <= 1 && candidates[0] === raw) return match;
+      const fallbacks = candidates.slice(1);
+      const fallbackAttr = fallbacks.length
+        ? ` data-fallbacks="${fallbacks.map((u) => encodeURIComponent(u)).join("|")}"`
+        : "";
+      return `<img${before}src="${candidates[0]}"${fallbackAttr}${after}>`;
     }
   );
 }

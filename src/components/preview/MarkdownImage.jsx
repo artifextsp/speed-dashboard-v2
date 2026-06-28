@@ -1,17 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import {
-  extractGoogleDriveFileId,
-  googleDriveImageUrls,
-  normalizeUrl,
-  resolveImageUrl,
-} from "../../kernel/urlUtils";
-
-function buildImageCandidates(src) {
-  const normalized = normalizeUrl(src || "");
-  const driveId = extractGoogleDriveFileId(normalized);
-  if (driveId) return googleDriveImageUrls(driveId);
-  return [resolveImageUrl(normalized)];
-}
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { buildImageCandidates, normalizeUrl } from "../../kernel/urlUtils";
 
 function shouldShowCaption(alt) {
   const label = String(alt ?? "").trim();
@@ -61,9 +49,27 @@ export function MarkdownImage({ src, alt }) {
   const candidates = useMemo(() => buildImageCandidates(src), [src]);
   const [attempt, setAttempt] = useState(0);
   const [failed, setFailed] = useState(false);
+  const [loaded, setLoaded] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const currentSrc = candidates[attempt] ?? candidates[0];
   const showCaption = shouldShowCaption(alt);
+
+  useEffect(() => {
+    setAttempt(0);
+    setFailed(false);
+    setLoaded(false);
+  }, [src, candidates]);
+
+  const tryNextCandidate = useCallback(() => {
+    setAttempt((current) => {
+      if (current < candidates.length - 1) {
+        setLoaded(false);
+        return current + 1;
+      }
+      setFailed(true);
+      return current;
+    });
+  }, [candidates.length]);
 
   if (!currentSrc) return null;
 
@@ -74,9 +80,10 @@ export function MarkdownImage({ src, alt }) {
           <div className="markdown-image-error">
             <p>No se pudo cargar la imagen{alt ? `: ${alt}` : ""}.</p>
             <p className="markdown-image-error__hint">
-              Si usas Google Drive, comparte el archivo como «Cualquier persona con el
-              enlace» (no solo la carpeta). También puedes pegar el enlace de vista;
-              lo convertimos al formato directo automáticamente.
+              Si usas Google Drive, abre el archivo en Drive y compártelo como
+              «Cualquier persona con el enlace» (no basta con compartir solo la
+              carpeta). También puedes pegar el enlace de vista; lo convertimos al
+              formato directo automáticamente.
             </p>
             <a href={normalizeUrl(src || "")} target="_blank" rel="noopener noreferrer">
               Abrir enlace original
@@ -93,26 +100,36 @@ export function MarkdownImage({ src, alt }) {
         <button
           type="button"
           className="markdown-image-card__frame"
-          onClick={() => setLightboxOpen(true)}
+          onClick={() => loaded && setLightboxOpen(true)}
           aria-label={alt ? `Ampliar imagen: ${alt}` : "Ampliar imagen"}
+          disabled={!loaded}
         >
+          {!loaded && (
+            <span className="markdown-image-card__loading" aria-hidden="true">
+              Cargando imagen…
+            </span>
+          )}
           <img
+            key={currentSrc}
             src={currentSrc}
             alt={alt || ""}
-            className="markdown-image-card__img"
-            loading="lazy"
+            className={`markdown-image-card__img${loaded ? " markdown-image-card__img--loaded" : ""}`}
+            decoding="async"
             referrerPolicy="no-referrer"
-            onError={() => {
-              if (attempt < candidates.length - 1) {
-                setAttempt((n) => n + 1);
+            onLoad={(event) => {
+              if (event.currentTarget.naturalWidth > 0) {
+                setLoaded(true);
                 return;
               }
-              setFailed(true);
+              tryNextCandidate();
             }}
+            onError={tryNextCandidate}
           />
-          <span className="markdown-image-card__hint" aria-hidden="true">
-            Clic para ampliar
-          </span>
+          {loaded ? (
+            <span className="markdown-image-card__hint" aria-hidden="true">
+              Clic para ampliar
+            </span>
+          ) : null}
         </button>
         {showCaption ? (
           <figcaption className="markdown-image-card__caption">{alt}</figcaption>
