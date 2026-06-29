@@ -1456,6 +1456,116 @@ body {
   line-height: 1.6 !important;
 }
 
+.editor-toolbar-select {
+  height: 28px;
+  min-width: 58px;
+  padding: 0 8px;
+  border: 1px solid var(--color-border-tertiary);
+  border-radius: var(--radius-sm);
+  background: var(--color-background-primary);
+  color: var(--color-text-primary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.editor-toolbar-color {
+  position: relative;
+  display: inline-flex;
+}
+
+.editor-toolbar-color__trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 28px;
+  padding: 0 8px;
+  border: 1px solid var(--color-border-tertiary);
+  border-radius: var(--radius-sm);
+  background: var(--color-background-primary);
+  color: var(--color-text-primary);
+  cursor: pointer;
+}
+
+.editor-toolbar-color__trigger:disabled,
+.editor-toolbar-select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.editor-toolbar-color__bar {
+  width: 14px;
+  height: 4px;
+  border-radius: 999px;
+}
+
+.editor-toolbar-color__panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 20;
+  width: 220px;
+  padding: 10px;
+  border: 1px solid var(--color-border-tertiary);
+  border-radius: var(--radius-md);
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(17, 24, 39, 0.12);
+}
+
+.editor-toolbar-color__swatches {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.editor-toolbar-color__swatch {
+  width: 100%;
+  aspect-ratio: 1;
+  border: 2px solid transparent;
+  border-radius: 999px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.editor-toolbar-color__swatch--active {
+  border-color: var(--color-text-primary);
+  box-shadow: 0 0 0 2px #fff, 0 0 0 3px currentColor;
+}
+
+.editor-toolbar-color__hex-row {
+  display: flex;
+  gap: 6px;
+}
+
+.editor-toolbar-color__hex-input {
+  flex: 1;
+  min-width: 0;
+  height: 30px;
+  padding: 0 8px;
+  border: 1px solid var(--color-border-tertiary);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+}
+
+.editor-toolbar-color__apply {
+  height: 30px;
+  padding: 0 10px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: #534ab7;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.rich-editor .w-md-editor-toolbar li:has(.editor-toolbar-select),
+.rich-editor .w-md-editor-toolbar li:has(.editor-toolbar-color) {
+  display: inline-flex;
+  align-items: center;
+}
+
 .interleaved-toggle {
   margin-top: 12px;
   padding: 12px;
