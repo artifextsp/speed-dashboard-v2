@@ -1566,6 +1566,11 @@ body {
   align-items: center;
 }
 
+.rich-editor__format-hint {
+  margin-top: -2px;
+  margin-bottom: 8px;
+}
+
 .interleaved-toggle {
   margin-top: 12px;
   padding: 12px;

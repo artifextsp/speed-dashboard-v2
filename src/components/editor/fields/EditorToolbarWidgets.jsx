@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { IconPalette } from "@tabler/icons-react";
 import { FONT_SIZE_OPTIONS, TEXT_COLOR_PRESETS, sanitizeColor } from "./richEditorFormat";
 
-export function EditorFontSizeSelect({ onApply, disabled }) {
+export function EditorFontSizeSelect({ onApply, onPrepare, disabled }) {
   return (
     <select
       className="editor-toolbar-select"
@@ -10,7 +10,10 @@ export function EditorFontSizeSelect({ onApply, disabled }) {
       disabled={disabled}
       title="Tamaño de texto"
       aria-label="Tamaño de texto"
-      onMouseDown={(event) => event.stopPropagation()}
+      onMouseDown={(event) => {
+        onPrepare?.();
+        event.stopPropagation();
+      }}
       onChange={(event) => {
         const size = event.target.value;
         if (!size) return;
@@ -28,7 +31,7 @@ export function EditorFontSizeSelect({ onApply, disabled }) {
   );
 }
 
-export function EditorColorPickerButton({ onApply, disabled }) {
+export function EditorColorPickerButton({ onApply, onPrepare, disabled }) {
   const [open, setOpen] = useState(false);
   const [hex, setHex] = useState("#534AB7");
   const rootRef = useRef(null);
@@ -61,7 +64,10 @@ export function EditorColorPickerButton({ onApply, disabled }) {
         title="Color de texto"
         aria-label="Color de texto"
         aria-expanded={open}
-        onMouseDown={(event) => event.stopPropagation()}
+        onMouseDown={(event) => {
+          onPrepare?.();
+          event.stopPropagation();
+        }}
         onClick={(event) => {
           event.stopPropagation();
           setOpen((current) => !current);

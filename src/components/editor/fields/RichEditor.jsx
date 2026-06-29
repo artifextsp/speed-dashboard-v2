@@ -30,6 +30,7 @@ import { EditorColorPickerButton, EditorFontSizeSelect } from "./EditorToolbarWi
 import "@uiw/react-md-editor/markdown-editor.css";
 
 const HISTORY_LIMIT = 100;
+const EMPTY_SELECTION = { start: 0, end: 0, text: "" };
 
 function makeAlignCommand(align, icon, label) {
   return {
@@ -147,19 +148,43 @@ export function RichEditor({ label, value, onChange, help, height = 320, readOnl
   const rootRef = useRef(null);
   const historyRef = useRef({ stack: [value || ""], index: 0 });
   const skipHistoryRef = useRef(false);
+  const savedSelectionRef = useRef(EMPTY_SELECTION);
 
   useEffect(() => {
     historyRef.current = { stack: [value || ""], index: 0 };
   }, []);
 
-  const getEditorContext = useCallback(() => {
+  const captureSelection = useCallback(() => {
     const textarea = rootRef.current?.querySelector("textarea.w-md-editor-text-input");
-    if (!textarea) return null;
-    return {
-      state: getStateFromTextArea(textarea),
-      api: new TextAreaTextApi(textarea),
+    if (!textarea) return;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    savedSelectionRef.current = {
+      start,
+      end,
+      text: textarea.value.slice(start, end),
     };
   }, []);
+
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root || readOnly) return undefined;
+
+    const handleCapture = () => captureSelection();
+    root.addEventListener("mousedown", handleCapture, true);
+
+    const textarea = root.querySelector("textarea.w-md-editor-text-input");
+    textarea?.addEventListener("select", handleCapture);
+    textarea?.addEventListener("keyup", handleCapture);
+    textarea?.addEventListener("mouseup", handleCapture);
+
+    return () => {
+      root.removeEventListener("mousedown", handleCapture, true);
+      textarea?.removeEventListener("select", handleCapture);
+      textarea?.removeEventListener("keyup", handleCapture);
+      textarea?.removeEventListener("mouseup", handleCapture);
+    };
+  }, [captureSelection, readOnly]);
 
   const pushHistory = useCallback((nextValue) => {
     if (skipHistoryRef.current) {
@@ -183,6 +208,60 @@ export function RichEditor({ label, value, onChange, help, height = 320, readOnl
       onChange(normalized);
     },
     [onChange, pushHistory]
+  );
+
+  const getEditorContext = useCallback(() => {
+    const textarea = rootRef.current?.querySelector("textarea.w-md-editor-text-input");
+    if (!textarea) return null;
+
+    const api = new TextAreaTextApi(textarea);
+    const saved = savedSelectionRef.current;
+
+    if (saved.end > saved.start) {
+      textarea.focus();
+      api.setSelectionRange({ start: saved.start, end: saved.end });
+      return {
+        state: {
+          text: textarea.value,
+          selectedText: saved.text,
+          selection: { start: saved.start, end: saved.end },
+        },
+        api,
+        textarea,
+      };
+    }
+
+    return {
+      state: getStateFromTextArea(textarea),
+      api,
+      textarea,
+    };
+  }, []);
+
+  const syncEditorValue = useCallback(() => {
+    const textarea = rootRef.current?.querySelector("textarea.w-md-editor-text-input");
+    if (textarea) handleChange(textarea.value);
+  }, [handleChange]);
+
+  const runFormat = useCallback(
+    (formatter) => {
+      const ctx = getEditorContext();
+      if (!ctx?.state.selectedText) return;
+      formatter(ctx.state, ctx.api);
+      syncEditorValue();
+      captureSelection();
+    },
+    [captureSelection, getEditorContext, syncEditorValue]
+  );
+
+  const wrapInlineFormat = useCallback(
+    (formatter) => (state, api) => {
+      if (!state.selectedText) return;
+      formatter(state, api);
+      syncEditorValue();
+      captureSelection();
+    },
+    [captureSelection, syncEditorValue]
   );
 
   const undo = useCallback(() => {
@@ -218,11 +297,8 @@ export function RichEditor({ label, value, onChange, help, height = 320, readOnl
       render: (_command, disabled) => (
         <EditorFontSizeSelect
           disabled={disabled}
-          onApply={(size) => {
-            const ctx = getEditorContext();
-            if (!ctx) return;
-            applyFontSizeFormat(ctx.state, ctx.api, size);
-          }}
+          onPrepare={captureSelection}
+          onApply={(size) => runFormat((state, api) => applyFontSizeFormat(state, api, size))}
         />
       ),
     };
@@ -233,11 +309,10 @@ export function RichEditor({ label, value, onChange, help, height = 320, readOnl
       render: (_command, disabled) => (
         <EditorColorPickerButton
           disabled={disabled}
-          onApply={(color) => {
-            const ctx = getEditorContext();
-            if (!ctx) return;
-            applyTextColorFormat(ctx.state, ctx.api, color);
-          }}
+          onPrepare={captureSelection}
+          onApply={(color) =>
+            runFormat((state, api) => applyTextColorFormat(state, api, color))
+          }
         />
       ),
     };
@@ -247,15 +322,15 @@ export function RichEditor({ label, value, onChange, help, height = 320, readOnl
       commands.divider,
       {
         ...commands.bold,
-        execute: (state, api) => applyBoldFormat(state, api),
+        execute: wrapInlineFormat(applyBoldFormat),
       },
       {
         ...commands.italic,
-        execute: (state, api) => applyItalicFormat(state, api),
+        execute: wrapInlineFormat(applyItalicFormat),
       },
       {
         ...commands.strikethrough,
-        execute: (state, api) => applyStrikeFormat(state, api),
+        execute: wrapInlineFormat(applyStrikeFormat),
       },
       textColorCommand,
       fontSizeCommand,
@@ -279,12 +354,18 @@ export function RichEditor({ label, value, onChange, help, height = 320, readOnl
       commands.code,
       commands.codeBlock,
     ];
-  }, [getEditorContext, undo]);
+  }, [captureSelection, runFormat, undo, wrapInlineFormat]);
 
   return (
     <div className="field rich-editor" data-color-mode="light" ref={rootRef}>
       {label && <label className="field__label">{label}</label>}
       {help && <p className="field__help">{help}</p>}
+      {!readOnly && (
+        <p className="field__help rich-editor__format-hint">
+          Selecciona el texto (sin preocuparte por símbolos como **). Puedes aplicar negrilla,
+          color y tamaño uno tras otro; el editor los combina automáticamente.
+        </p>
+      )}
       <MDEditor
         value={value || ""}
         onChange={readOnly ? undefined : handleChange}
