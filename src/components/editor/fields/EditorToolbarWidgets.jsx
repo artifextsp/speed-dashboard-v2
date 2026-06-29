@@ -1,6 +1,61 @@
 import { useEffect, useRef, useState } from "react";
-import { IconPalette } from "@tabler/icons-react";
+import { IconPalette, IconPaint, IconPaintFilled } from "@tabler/icons-react";
 import { FONT_SIZE_OPTIONS, TEXT_COLOR_PRESETS, sanitizeColor } from "./richEditorFormat";
+
+export function EditorToolbarButton({ icon, title, disabled, active, onPrepare, onClick }) {
+  return (
+    <button
+      type="button"
+      className={`editor-toolbar-btn${active ? " editor-toolbar-btn--active" : ""}`}
+      disabled={disabled}
+      title={title}
+      aria-label={title}
+      onMouseDown={(event) => {
+        onPrepare?.();
+        event.stopPropagation();
+      }}
+      onClick={(event) => {
+        event.stopPropagation();
+        onClick?.();
+      }}
+    >
+      {icon}
+    </button>
+  );
+}
+
+export function EditorStylePaintButtons({
+  copiedStyleLabel,
+  canApply,
+  disabled,
+  onPrepare,
+  onCopy,
+  onApply,
+}) {
+  return (
+    <div className="editor-toolbar-style-paint">
+      <EditorToolbarButton
+        icon={<IconPaint size={13} />}
+        title="Copiar estilo del texto seleccionado"
+        disabled={disabled}
+        onPrepare={onPrepare}
+        onClick={onCopy}
+      />
+      <EditorToolbarButton
+        icon={<IconPaintFilled size={13} />}
+        title={
+          canApply
+            ? `Aplicar estilo copiado (${copiedStyleLabel})`
+            : "Primero copia un estilo con el botón de la izquierda"
+        }
+        disabled={disabled || !canApply}
+        active={canApply}
+        onPrepare={onPrepare}
+        onClick={onApply}
+      />
+    </div>
+  );
+}
 
 export function EditorFontSizeSelect({ onApply, onPrepare, disabled }) {
   return (

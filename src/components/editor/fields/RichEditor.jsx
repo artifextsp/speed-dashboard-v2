@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import MDEditor from "@uiw/react-md-editor";
 import * as commands from "@uiw/react-md-editor/commands";
 import { getStateFromTextArea, TextAreaTextApi } from "@uiw/react-md-editor/commands";
@@ -22,12 +22,20 @@ import {
 } from "@tabler/icons-react";
 import {
   applyBoldFormat,
+  applyCopiedFormats,
   applyFontSizeFormat,
   applyItalicFormat,
   applyStrikeFormat,
   applyTextColorFormat,
+  copyFormatsFromText,
+  describeFormats,
+  hasActiveFormats,
 } from "./richEditorFormat";
-import { EditorColorPickerButton, EditorFontSizeSelect } from "./EditorToolbarWidgets";
+import {
+  EditorColorPickerButton,
+  EditorFontSizeSelect,
+  EditorStylePaintButtons,
+} from "./EditorToolbarWidgets";
 import "@uiw/react-md-editor/markdown-editor.css";
 
 const HISTORY_LIMIT = 100;
@@ -150,6 +158,7 @@ export function RichEditor({ label, value, onChange, help, height = 320, readOnl
   const historyRef = useRef({ stack: [value || ""], index: 0 });
   const skipHistoryRef = useRef(false);
   const savedSelectionRef = useRef(EMPTY_SELECTION);
+  const [copiedFormats, setCopiedFormats] = useState(null);
 
   useEffect(() => {
     historyRef.current = { stack: [value || ""], index: 0 };
@@ -301,6 +310,28 @@ export function RichEditor({ label, value, onChange, help, height = 320, readOnl
     onChange(history.stack[history.index]);
   }, [onChange]);
 
+  const copyStyle = useCallback(() => {
+    const ctx = getEditorContext();
+    const text = ctx?.state.selectedText;
+    if (!text) {
+      window.alert("Selecciona un texto con el estilo que quieres copiar.");
+      return;
+    }
+    const formats = copyFormatsFromText(text);
+    if (!hasActiveFormats(formats)) {
+      window.alert("El texto seleccionado no tiene estilo aplicado (negrilla, color, tamaño, etc.).");
+      return;
+    }
+    setCopiedFormats(formats);
+  }, [getEditorContext]);
+
+  const applyCopiedStyle = useCallback(() => {
+    if (!copiedFormats || !hasActiveFormats(copiedFormats)) return;
+    runFormat((state, api) => applyCopiedFormats(state, api, copiedFormats));
+  }, [copiedFormats, runFormat]);
+
+  const copiedStyleLabel = copiedFormats ? describeFormats(copiedFormats) : "";
+
   const editorCommands = useMemo(() => {
     const { linkCommand, imageCommand, youtubeCommand, spacerCommand } = createStaticCommands();
     const heading2Command = makeHeadingCommand(2, commands.title2);
@@ -346,6 +377,21 @@ export function RichEditor({ label, value, onChange, help, height = 320, readOnl
       ),
     };
 
+    const stylePaintCommand = {
+      name: "stylePaint",
+      keyCommand: "stylePaint",
+      render: (_command, disabled) => (
+        <EditorStylePaintButtons
+          disabled={disabled}
+          canApply={Boolean(copiedFormats && hasActiveFormats(copiedFormats))}
+          copiedStyleLabel={copiedStyleLabel}
+          onPrepare={captureSelection}
+          onCopy={copyStyle}
+          onApply={applyCopiedStyle}
+        />
+      ),
+    };
+
     return [
       undoCommand,
       commands.divider,
@@ -363,6 +409,7 @@ export function RichEditor({ label, value, onChange, help, height = 320, readOnl
       },
       textColorCommand,
       fontSizeCommand,
+      stylePaintCommand,
       commands.divider,
       heading2Command,
       heading3Command,
@@ -383,7 +430,7 @@ export function RichEditor({ label, value, onChange, help, height = 320, readOnl
       commands.code,
       commands.codeBlock,
     ];
-  }, [captureSelection, runFormat, undo, wrapInlineFormat]);
+  }, [applyCopiedStyle, captureSelection, copiedFormats, copiedStyleLabel, copyStyle, runFormat, undo, wrapInlineFormat]);
 
   return (
     <div className="field rich-editor" data-color-mode="light" ref={rootRef}>
@@ -391,8 +438,14 @@ export function RichEditor({ label, value, onChange, help, height = 320, readOnl
       {help && <p className="field__help">{help}</p>}
       {!readOnly && (
         <p className="field__help rich-editor__format-hint">
-          Selecciona el texto y aplica negrilla, color o tamaño. Puedes encadenar varios formatos
-          sin volver a seleccionar; el bloque completo (incluidas listas) conserva el estilo.
+          Usa <strong>Copiar estilo</strong> en un texto ya formateado y luego <strong>Aplicar estilo</strong> en
+          otro bloque. Puedes reutilizar el mismo estilo varias veces sin reconfigurar negrilla, color o tamaño.
+          {copiedStyleLabel ? (
+            <>
+              {" "}
+              Estilo en portapapeles: <em>{copiedStyleLabel}</em>.
+            </>
+          ) : null}
         </p>
       )}
       <MDEditor

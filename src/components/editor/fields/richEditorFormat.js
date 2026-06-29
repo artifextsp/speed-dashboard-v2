@@ -44,6 +44,42 @@ function createEmptyFormats() {
   };
 }
 
+export function cloneFormats(formats) {
+  return {
+    bold: Boolean(formats?.bold),
+    italic: Boolean(formats?.italic),
+    strike: Boolean(formats?.strike),
+    color: formats?.color ?? null,
+    fontSize: formats?.fontSize ?? null,
+  };
+}
+
+export function hasActiveFormats(formats) {
+  return Boolean(
+    formats?.bold ||
+      formats?.italic ||
+      formats?.strike ||
+      formats?.color ||
+      formats?.fontSize
+  );
+}
+
+export function describeFormats(formats) {
+  if (!hasActiveFormats(formats)) return "sin estilo";
+  const parts = [];
+  if (formats.bold) parts.push("negrilla");
+  if (formats.italic) parts.push("cursiva");
+  if (formats.strike) parts.push("tachado");
+  if (formats.fontSize) parts.push(`${formats.fontSize}px`);
+  if (formats.color) parts.push(formats.color);
+  return parts.join(", ");
+}
+
+export function copyFormatsFromText(text) {
+  const { formats } = extractFormats(text);
+  return cloneFormats(formats);
+}
+
 function parseStyleAttr(styleStr, formats) {
   String(styleStr || "")
     .split(";")
@@ -233,4 +269,15 @@ export function applyFontSizeFormat(state, api, sizePx) {
   return applyFormat(state, api, (formats) => {
     formats.fontSize = size;
   });
+}
+
+export function applyCopiedFormats(state, api, copiedFormats) {
+  const text = getSelectionText(state);
+  if (!text) return null;
+  const template = cloneFormats(copiedFormats);
+  if (!hasActiveFormats(template)) return null;
+  const { content } = extractFormats(text);
+  const replacement = buildFormattedHtml(content, template);
+  api.replaceSelection(replacement);
+  return replacement;
 }
