@@ -73,19 +73,20 @@ export function extractGoogleDriveFileId(url) {
 }
 
 /** URLs directas para embeber imágenes de Drive (orden de preferencia). */
-export function googleDriveImageUrls(fileId) {
+export function googleDriveImageUrls(fileId, { maxWidth = 1920 } = {}) {
+  const width = Math.max(120, Math.min(2400, Number(maxWidth) || 1920));
   return [
-    `https://drive.google.com/thumbnail?id=${fileId}&sz=w1920`,
-    `https://lh3.googleusercontent.com/d/${fileId}=w1920`,
+    `https://lh3.googleusercontent.com/d/${fileId}=w${width}`,
+    `https://drive.google.com/thumbnail?id=${fileId}&sz=w${width}`,
     `https://drive.google.com/uc?export=view&id=${fileId}`,
   ];
 }
 
 /** Lista de URLs a probar para una imagen (Drive u origen directo). */
-export function buildImageCandidates(src) {
+export function buildImageCandidates(src, { maxWidth = 1920 } = {}) {
   const normalized = sanitizeImageSrc(src);
   const driveId = extractGoogleDriveFileId(normalized);
-  if (driveId) return googleDriveImageUrls(driveId);
+  if (driveId) return googleDriveImageUrls(driveId, { maxWidth });
   return [normalized];
 }
 

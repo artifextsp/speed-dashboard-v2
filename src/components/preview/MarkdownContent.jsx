@@ -6,7 +6,7 @@ import { prepareMarkdownForRender } from "../../kernel/markdownNormalize";
 import { friendlyLinkLabel } from "../../utils/enrichContentHtml";
 import { MarkdownImage } from "./MarkdownImage";
 
-export function MarkdownContent({ children }) {
+export function MarkdownContent({ children, compactImages = false }) {
   if (!children) return null;
   const source = prepareMarkdownForRender(children);
   return (
@@ -33,7 +33,7 @@ export function MarkdownContent({ children }) {
             </a>
           );
         },
-        img: ({ src, alt }) => <MarkdownImage src={src} alt={alt} />,
+        img: ({ src, alt }) => <MarkdownImage src={src} alt={alt} compact={compactImages} />,
         div: ({ className, ...props }) => {
           if (className?.includes("markdown-spacer")) {
             return <div className="markdown-spacer" aria-hidden="true" />;

@@ -1,5 +1,15 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { buildImageCandidates, normalizeUrl } from "../../kernel/urlUtils";
+import {
+  findFirstViableCandidate,
+  isImageUrlLoaded,
+  markImageUrlFailed,
+  markImageUrlLoaded,
+  preloadImageCandidates,
+} from "../../kernel/imageLoadCache";
+
+const CANDIDATE_TIMEOUT_MS = 4500;
+const EDITOR_PREVIEW_MAX_WIDTH = 640;
 
 function shouldShowCaption(alt) {
   const label = String(alt ?? "").trim();
@@ -45,22 +55,83 @@ function MarkdownLightbox({ src, alt, onClose }) {
   );
 }
 
-export function MarkdownImage({ src, alt }) {
-  const candidates = useMemo(() => buildImageCandidates(src), [src]);
-  const [attempt, setAttempt] = useState(0);
+export function MarkdownImage({ src, alt, compact = false }) {
+  const imgRef = useRef(null);
+  const candidates = useMemo(
+    () =>
+      buildImageCandidates(src, {
+        maxWidth: compact ? EDITOR_PREVIEW_MAX_WIDTH : 1920,
+      }),
+    [compact, src]
+  );
+  const initialCandidate = useMemo(
+    () => findFirstViableCandidate(candidates),
+    [candidates]
+  );
+  const [attempt, setAttempt] = useState(initialCandidate.index);
   const [failed, setFailed] = useState(false);
-  const [loaded, setLoaded] = useState(false);
+  const [loaded, setLoaded] = useState(() => isImageUrlLoaded(initialCandidate.url));
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const currentSrc = candidates[attempt] ?? candidates[0];
   const showCaption = shouldShowCaption(alt);
+  const label = String(alt ?? "").trim();
 
   useEffect(() => {
-    setAttempt(0);
+    const next = findFirstViableCandidate(candidates);
+    setAttempt(next.index);
     setFailed(false);
-    setLoaded(false);
+    setLoaded(isImageUrlLoaded(next.url));
   }, [src, candidates]);
 
+  useEffect(() => {
+    if (!currentSrc || loaded || failed) return undefined;
+
+    let cancelled = false;
+    preloadImageCandidates(candidates.slice(attempt)).then((resolved) => {
+      if (cancelled) return;
+      if (!resolved) return;
+      const resolvedIndex = candidates.indexOf(resolved);
+      if (resolvedIndex >= 0 && resolvedIndex !== attempt) {
+        setAttempt(resolvedIndex);
+      }
+      setLoaded(true);
+      setFailed(false);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [attempt, candidates, currentSrc, failed, loaded]);
+
+  useEffect(() => {
+    if (!currentSrc || loaded || failed) return undefined;
+
+    const timeoutId = window.setTimeout(() => {
+      markImageUrlFailed(currentSrc);
+      setAttempt((current) => {
+        if (current < candidates.length - 1) {
+          setLoaded(false);
+          return current + 1;
+        }
+        setFailed(true);
+        return current;
+      });
+    }, CANDIDATE_TIMEOUT_MS);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [candidates.length, currentSrc, failed, loaded]);
+
+  useEffect(() => {
+    const img = imgRef.current;
+    if (!img || loaded) return;
+    if (img.complete && img.naturalWidth > 0) {
+      markImageUrlLoaded(currentSrc);
+      setLoaded(true);
+    }
+  }, [currentSrc, loaded]);
+
   const tryNextCandidate = useCallback(() => {
+    markImageUrlFailed(currentSrc);
     setAttempt((current) => {
       if (current < candidates.length - 1) {
         setLoaded(false);
@@ -69,14 +140,30 @@ export function MarkdownImage({ src, alt }) {
       setFailed(true);
       return current;
     });
-  }, [candidates.length]);
+  }, [candidates.length, currentSrc]);
+
+  const handleLoad = useCallback(
+    (event) => {
+      if (event.currentTarget.naturalWidth > 0) {
+        markImageUrlLoaded(currentSrc);
+        setLoaded(true);
+        setFailed(false);
+        return;
+      }
+      tryNextCandidate();
+    },
+    [currentSrc, tryNextCandidate]
+  );
 
   if (!currentSrc) return null;
 
   if (failed) {
     return (
-      <figure className="markdown-image-card markdown-image-card--error">
+      <figure
+        className={`markdown-image-card markdown-image-card--error${compact ? " markdown-image-card--compact" : ""}`}
+      >
         <div className="markdown-image-card__frame">
+          {label ? <p className="markdown-image-card__label">{label}</p> : null}
           <div className="markdown-image-error">
             <p>No se pudo cargar la imagen{alt ? `: ${alt}` : ""}.</p>
             <p className="markdown-image-error__hint">
@@ -96,7 +183,12 @@ export function MarkdownImage({ src, alt }) {
 
   return (
     <>
-      <figure className="markdown-image-card markdown-image-card--zoomable">
+      <figure
+        className={`markdown-image-card markdown-image-card--zoomable${compact ? " markdown-image-card--compact" : ""}`}
+      >
+        {compact && label ? (
+          <p className="markdown-image-card__label markdown-image-card__label--compact">{label}</p>
+        ) : null}
         <button
           type="button"
           className="markdown-image-card__frame"
@@ -106,32 +198,29 @@ export function MarkdownImage({ src, alt }) {
         >
           {!loaded && (
             <span className="markdown-image-card__loading" aria-hidden="true">
-              Cargando imagen…
+              {compact && label ? `Cargando: ${label}` : "Cargando imagen…"}
             </span>
           )}
           <img
+            ref={imgRef}
             key={currentSrc}
             src={currentSrc}
             alt={alt || ""}
             className={`markdown-image-card__img${loaded ? " markdown-image-card__img--loaded" : ""}`}
             decoding="async"
+            loading={compact ? "eager" : "lazy"}
+            fetchPriority={compact ? "high" : "auto"}
             referrerPolicy="no-referrer"
-            onLoad={(event) => {
-              if (event.currentTarget.naturalWidth > 0) {
-                setLoaded(true);
-                return;
-              }
-              tryNextCandidate();
-            }}
+            onLoad={handleLoad}
             onError={tryNextCandidate}
           />
-          {loaded ? (
+          {loaded && !compact ? (
             <span className="markdown-image-card__hint" aria-hidden="true">
               Clic para ampliar
             </span>
           ) : null}
         </button>
-        {showCaption ? (
+        {showCaption && !compact ? (
           <figcaption className="markdown-image-card__caption">{alt}</figcaption>
         ) : null}
       </figure>

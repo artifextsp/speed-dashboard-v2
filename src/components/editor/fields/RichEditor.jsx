@@ -10,6 +10,7 @@ import {
   youtubeEmbedUrl,
   youtubeWatchUrl,
 } from "../../../kernel/urlUtils";
+import { preloadMarkdownImages } from "../../../kernel/markdownImages";
 import { MarkdownContent } from "../../preview/MarkdownContent";
 import {
   IconAlignLeft,
@@ -153,6 +154,14 @@ export function RichEditor({ label, value, onChange, help, height = 320, readOnl
   useEffect(() => {
     historyRef.current = { stack: [value || ""], index: 0 };
   }, []);
+
+  useEffect(() => {
+    if (readOnly || !value) return undefined;
+    const timeoutId = window.setTimeout(() => {
+      preloadMarkdownImages(value, { maxWidth: 640 });
+    }, 350);
+    return () => window.clearTimeout(timeoutId);
+  }, [readOnly, value]);
 
   const captureSelection = useCallback(() => {
     const textarea = rootRef.current?.querySelector("textarea.w-md-editor-text-input");
@@ -399,7 +408,7 @@ export function RichEditor({ label, value, onChange, help, height = 320, readOnl
           preview: (source) => (
             <div className="wmde-markdown-color" data-color-mode="light">
               <div className="pv-markdown">
-                <MarkdownContent>{source}</MarkdownContent>
+                <MarkdownContent compactImages>{source}</MarkdownContent>
               </div>
             </div>
           ),
