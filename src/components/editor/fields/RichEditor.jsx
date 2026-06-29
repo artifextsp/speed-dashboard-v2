@@ -243,25 +243,45 @@ export function RichEditor({ label, value, onChange, help, height = 320, readOnl
     if (textarea) handleChange(textarea.value);
   }, [handleChange]);
 
+  const preserveFormattedSelection = useCallback((start, replacement) => {
+    if (!replacement) return;
+    const end = start + replacement.length;
+    savedSelectionRef.current = {
+      start,
+      end,
+      text: replacement,
+    };
+
+    requestAnimationFrame(() => {
+      const textarea = rootRef.current?.querySelector("textarea.w-md-editor-text-input");
+      if (!textarea) return;
+      textarea.focus();
+      const api = new TextAreaTextApi(textarea);
+      api.setSelectionRange({ start, end });
+    });
+  }, []);
+
   const runFormat = useCallback(
     (formatter) => {
       const ctx = getEditorContext();
       if (!ctx?.state.selectedText) return;
-      formatter(ctx.state, ctx.api);
+      const start = ctx.state.selection?.start ?? savedSelectionRef.current.start;
+      const replacement = formatter(ctx.state, ctx.api);
       syncEditorValue();
-      captureSelection();
+      preserveFormattedSelection(start, replacement);
     },
-    [captureSelection, getEditorContext, syncEditorValue]
+    [getEditorContext, preserveFormattedSelection, syncEditorValue]
   );
 
   const wrapInlineFormat = useCallback(
     (formatter) => (state, api) => {
       if (!state.selectedText) return;
-      formatter(state, api);
+      const start = state.selection?.start ?? 0;
+      const replacement = formatter(state, api);
       syncEditorValue();
-      captureSelection();
+      preserveFormattedSelection(start, replacement);
     },
-    [captureSelection, syncEditorValue]
+    [preserveFormattedSelection, syncEditorValue]
   );
 
   const undo = useCallback(() => {
@@ -362,8 +382,8 @@ export function RichEditor({ label, value, onChange, help, height = 320, readOnl
       {help && <p className="field__help">{help}</p>}
       {!readOnly && (
         <p className="field__help rich-editor__format-hint">
-          Selecciona el texto (sin preocuparte por símbolos como **). Puedes aplicar negrilla,
-          color y tamaño uno tras otro; el editor los combina automáticamente.
+          Selecciona el texto y aplica negrilla, color o tamaño. Puedes encadenar varios formatos
+          sin volver a seleccionar; el bloque completo (incluidas listas) conserva el estilo.
         </p>
       )}
       <MDEditor

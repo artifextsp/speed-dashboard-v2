@@ -1981,6 +1981,17 @@ body {
 
 .pv-markdown li { margin-bottom: 4px; }
 
+.pv-markdown .markdown-styled-block {
+  margin-bottom: 12px;
+}
+
+.pv-markdown .markdown-styled-block ol,
+.pv-markdown .markdown-styled-block ul,
+.pv-markdown .markdown-styled-block p {
+  color: inherit;
+  font-size: inherit;
+}
+
 .pv-markdown code {
   background: var(--color-background-tertiary);
   padding: 2px 6px;

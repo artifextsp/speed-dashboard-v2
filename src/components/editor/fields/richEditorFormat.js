@@ -12,8 +12,19 @@ export const TEXT_COLOR_PRESETS = [
   "#64748B",
 ];
 
+export const STYLED_BLOCK_CLASS = "markdown-styled-block";
+
 export function isMultiLine(text) {
   return String(text ?? "").includes("\n");
+}
+
+export function hasBlockMarkdown(text) {
+  return /^\s*\d+\.\s/m.test(text) || /^\s*[-*+]\s/m.test(text);
+}
+
+export function needsBlockWrapper(content, formats) {
+  if (!formats.fontSize && !formats.color) return false;
+  return isMultiLine(content) || hasBlockMarkdown(content);
 }
 
 export function sanitizeColor(color) {
@@ -63,6 +74,27 @@ export function extractFormats(text) {
 
   for (let i = 0; i < 12; i += 1) {
     let peeled = false;
+
+    const styledDivMatch = content.match(
+      new RegExp(
+        `^<div\\s+class="${STYLED_BLOCK_CLASS}"\\s+style="([^"]*)">([\\s\\S]*)<\\/div>$`,
+        "i"
+      )
+    );
+    if (styledDivMatch) {
+      parseStyleAttr(styledDivMatch[1], formats);
+      content = styledDivMatch[2];
+      peeled = true;
+      continue;
+    }
+
+    const styledDivLegacyMatch = content.match(/^<div\s+style="([^"]*)">([\s\S]*)<\/div>$/i);
+    if (styledDivLegacyMatch) {
+      parseStyleAttr(styledDivLegacyMatch[1], formats);
+      content = styledDivLegacyMatch[2];
+      peeled = true;
+      continue;
+    }
 
     const spanMatch = content.match(/^<span\s+style="([^"]*)">([\s\S]*)<\/span>$/i);
     if (spanMatch) {
@@ -145,57 +177,60 @@ export function buildFormattedHtml(content, formats) {
   if (formats.color) styles.push(`color: ${formats.color}`);
   if (formats.fontSize) styles.push(`font-size: ${formats.fontSize}px`);
 
-  if (styles.length > 0) {
-    html = `<span style="${styles.join("; ")}">${html}</span>`;
+  if (styles.length === 0) return html;
+
+  const styleAttr = styles.join("; ");
+  if (needsBlockWrapper(content, formats)) {
+    return `<div class="${STYLED_BLOCK_CLASS}" style="${styleAttr}">\n${html}\n</div>`;
   }
 
-  return html;
+  return `<span style="${styleAttr}">${html}</span>`;
 }
 
 export function getSelectionText(state) {
   return state?.selectedText ?? "";
 }
 
-export function applyBoldFormat(state, api) {
+function applyFormat(state, api, updater) {
   const text = getSelectionText(state);
-  if (!text) return;
+  if (!text) return null;
   const { content, formats } = extractFormats(text);
-  formats.bold = !formats.bold;
-  api.replaceSelection(buildFormattedHtml(content, formats));
+  updater(formats);
+  const replacement = buildFormattedHtml(content, formats);
+  api.replaceSelection(replacement);
+  return replacement;
+}
+
+export function applyBoldFormat(state, api) {
+  return applyFormat(state, api, (formats) => {
+    formats.bold = !formats.bold;
+  });
 }
 
 export function applyItalicFormat(state, api) {
-  const text = getSelectionText(state);
-  if (!text) return;
-  const { content, formats } = extractFormats(text);
-  formats.italic = !formats.italic;
-  api.replaceSelection(buildFormattedHtml(content, formats));
+  return applyFormat(state, api, (formats) => {
+    formats.italic = !formats.italic;
+  });
 }
 
 export function applyStrikeFormat(state, api) {
-  const text = getSelectionText(state);
-  if (!text) return;
-  const { content, formats } = extractFormats(text);
-  formats.strike = !formats.strike;
-  api.replaceSelection(buildFormattedHtml(content, formats));
+  return applyFormat(state, api, (formats) => {
+    formats.strike = !formats.strike;
+  });
 }
 
 export function applyTextColorFormat(state, api, color) {
   const safeColor = sanitizeColor(color);
-  if (!safeColor) return;
-  const text = getSelectionText(state);
-  if (!text) return;
-  const { content, formats } = extractFormats(text);
-  formats.color = safeColor;
-  api.replaceSelection(buildFormattedHtml(content, formats));
+  if (!safeColor) return null;
+  return applyFormat(state, api, (formats) => {
+    formats.color = safeColor;
+  });
 }
 
 export function applyFontSizeFormat(state, api, sizePx) {
   const size = Number(sizePx);
-  if (!size || size < 8 || size > 72) return;
-  const text = getSelectionText(state);
-  if (!text) return;
-  const { content, formats } = extractFormats(text);
-  formats.fontSize = size;
-  api.replaceSelection(buildFormattedHtml(content, formats));
+  if (!size || size < 8 || size > 72) return null;
+  return applyFormat(state, api, (formats) => {
+    formats.fontSize = size;
+  });
 }

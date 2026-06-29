@@ -127,11 +127,15 @@ export function unwrapTrappingHtmlDivs(markdown) {
     (_, inner) => `\n\n${inner.trim()}\n\n`
   );
 
+  const isProtectedStyledBlock = (tag) =>
+    /class="[^"]*\bmarkdown-styled-block\b/i.test(tag);
+
   let previous;
   do {
     previous = out;
-    out = out.replace(/<div(?:\s[^>]*)?>\s*([\s\S]*?)\s*<\/div>/gi, (match, inner) => {
+    out = out.replace(/<div(\s[^>]*)>\s*([\s\S]*?)\s*<\/div>/gi, (match, attrs, inner) => {
       if (/@@MD_PROTECT_\d+@@/.test(match)) return match;
+      if (isProtectedStyledBlock(attrs)) return match;
       if (/<(?:div|iframe|img|figure)\b/i.test(inner)) return match;
       const body = inner.trim();
       if (!body) return "";
