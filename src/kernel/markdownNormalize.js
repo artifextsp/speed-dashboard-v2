@@ -1,7 +1,7 @@
 import { expandMarkdownVerticalSpace } from "./markdownSpacing.js";
 
 const PROTECTED_BLOCK_RE =
-  /(<div class="markdown-embed markdown-embed--video">[\s\S]*?<\/div>(?:\s*<p class="markdown-video-link">[\s\S]*?<\/p>)?|<div class="markdown-spacer"><\/div>|```[\s\S]*?```|`[^`\n]+`)/gi;
+  /(<div class="markdown-table-wrap"[\s\S]*?<\/div>|<div class="markdown-embed markdown-embed--video">[\s\S]*?<\/div>(?:\s*<p class="markdown-video-link">[\s\S]*?<\/p>)?|<div class="markdown-spacer"><\/div>|```[\s\S]*?```|`[^`\n]+`)/gi;
 
 function protectBlocks(markdown) {
   const tokens = [];
@@ -129,6 +129,7 @@ export function unwrapTrappingHtmlDivs(markdown) {
 
   const isProtectedStyledBlock = (tag) =>
     /class="[^"]*\bmarkdown-styled-block\b/i.test(tag);
+  const isProtectedTableWrap = (tag) => /class="[^"]*\bmarkdown-table-wrap\b/i.test(tag);
 
   let previous;
   do {
@@ -136,6 +137,7 @@ export function unwrapTrappingHtmlDivs(markdown) {
     out = out.replace(/<div(\s[^>]*)>\s*([\s\S]*?)\s*<\/div>/gi, (match, attrs, inner) => {
       if (/@@MD_PROTECT_\d+@@/.test(match)) return match;
       if (isProtectedStyledBlock(attrs)) return match;
+      if (isProtectedTableWrap(attrs)) return match;
       if (/<(?:div|iframe|img|figure)\b/i.test(inner)) return match;
       const body = inner.trim();
       if (!body) return "";

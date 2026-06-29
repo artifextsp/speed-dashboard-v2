@@ -5,8 +5,15 @@ import { normalizeUrl, extractYouTubeId, youtubeWatchUrl } from "../../kernel/ur
 import { prepareMarkdownForRender } from "../../kernel/markdownNormalize";
 import { friendlyLinkLabel } from "../../utils/enrichContentHtml";
 import { MarkdownImage } from "./MarkdownImage";
+import { MarkdownEditableTable } from "./MarkdownEditableTable";
+import { TABLE_WRAP_CLASS } from "../../kernel/markdownTable";
 
-export function MarkdownContent({ children, compactImages = false }) {
+export function MarkdownContent({
+  children,
+  compactImages = false,
+  editableTables = false,
+  onTableChange,
+}) {
   if (!children) return null;
   const source = prepareMarkdownForRender(children);
   return (
@@ -34,9 +41,29 @@ export function MarkdownContent({ children, compactImages = false }) {
           );
         },
         img: ({ src, alt }) => <MarkdownImage src={src} alt={alt} compact={compactImages} />,
-        div: ({ className, ...props }) => {
+        table: ({ children, className, ...props }) => (
+          <table className={className} {...props}>
+            {children}
+          </table>
+        ),
+        div: ({ className, children, ...props }) => {
           if (className?.includes("markdown-spacer")) {
             return <div className="markdown-spacer" aria-hidden="true" />;
+          }
+          if (className?.includes(TABLE_WRAP_CLASS)) {
+            const tableId = props["data-table-id"];
+            if (editableTables && onTableChange && tableId) {
+              return (
+                <MarkdownEditableTable tableId={tableId} onTableChange={onTableChange}>
+                  {children}
+                </MarkdownEditableTable>
+              );
+            }
+            return (
+              <div className={className} data-table-id={tableId}>
+                {children}
+              </div>
+            );
           }
           return <div className={className} {...props} />;
         },

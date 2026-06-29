@@ -11,6 +11,7 @@ import {
   youtubeWatchUrl,
 } from "../../../kernel/urlUtils";
 import { preloadMarkdownImages } from "../../../kernel/markdownImages";
+import { replaceTableInMarkdown } from "../../../kernel/markdownTable";
 import { MarkdownContent } from "../../preview/MarkdownContent";
 import {
   IconAlignLeft,
@@ -36,6 +37,7 @@ import {
   EditorFontSizeSelect,
   EditorStylePaintButtons,
 } from "./EditorToolbarWidgets";
+import { EditorTableInsertButton } from "./EditorTableInsert";
 import "@uiw/react-md-editor/markdown-editor.css";
 
 const HISTORY_LIMIT = 100;
@@ -332,6 +334,29 @@ export function RichEditor({ label, value, onChange, help, height = 320, readOnl
 
   const copiedStyleLabel = copiedFormats ? describeFormats(copiedFormats) : "";
 
+  const insertTable = useCallback(
+    (html) => {
+      const ctx = getEditorContext();
+      if (ctx?.api) {
+        const start = ctx.state.selection?.start ?? ctx.textarea.selectionStart ?? 0;
+        ctx.api.replaceSelection(html);
+        syncEditorValue();
+        preserveFormattedSelection(start, html.trim());
+        return;
+      }
+      handleChange(`${value || ""}${html}`);
+    },
+    [getEditorContext, handleChange, preserveFormattedSelection, syncEditorValue, value]
+  );
+
+  const handleTableChange = useCallback(
+    (tableId, tableWrapHtml) => {
+      const next = replaceTableInMarkdown(value || "", tableId, tableWrapHtml);
+      if (next !== value) handleChange(next);
+    },
+    [handleChange, value]
+  );
+
   const editorCommands = useMemo(() => {
     const { linkCommand, imageCommand, youtubeCommand, spacerCommand } = createStaticCommands();
     const heading2Command = makeHeadingCommand(2, commands.title2);
@@ -392,6 +417,18 @@ export function RichEditor({ label, value, onChange, help, height = 320, readOnl
       ),
     };
 
+    const tableCommand = {
+      name: "table",
+      keyCommand: "table",
+      render: (_command, disabled) => (
+        <EditorTableInsertButton
+          disabled={disabled}
+          onPrepare={captureSelection}
+          onInsert={insertTable}
+        />
+      ),
+    };
+
     return [
       undoCommand,
       commands.divider,
@@ -417,6 +454,7 @@ export function RichEditor({ label, value, onChange, help, height = 320, readOnl
       commands.unorderedListCommand,
       commands.orderedListCommand,
       commands.divider,
+      tableCommand,
       linkCommand,
       imageCommand,
       spacerCommand,
@@ -430,7 +468,7 @@ export function RichEditor({ label, value, onChange, help, height = 320, readOnl
       commands.code,
       commands.codeBlock,
     ];
-  }, [applyCopiedStyle, captureSelection, copiedFormats, copiedStyleLabel, copyStyle, runFormat, undo, wrapInlineFormat]);
+  }, [applyCopiedStyle, captureSelection, copiedFormats, copiedStyleLabel, copyStyle, insertTable, runFormat, undo, wrapInlineFormat]);
 
   return (
     <div className="field rich-editor" data-color-mode="light" ref={rootRef}>
@@ -439,7 +477,8 @@ export function RichEditor({ label, value, onChange, help, height = 320, readOnl
       {!readOnly && (
         <p className="field__help rich-editor__format-hint">
           Usa <strong>Copiar estilo</strong> en un texto ya formateado y luego <strong>Aplicar estilo</strong> en
-          otro bloque. Puedes reutilizar el mismo estilo varias veces sin reconfigurar negrilla, color o tamaño.
+          otro bloque. Las <strong>tablas</strong> se editan en la vista previa: arrastra bordes para tamaño y usa el
+          cuadro de color en cada celda.
           {copiedStyleLabel ? (
             <>
               {" "}
@@ -461,7 +500,13 @@ export function RichEditor({ label, value, onChange, help, height = 320, readOnl
           preview: (source) => (
             <div className="wmde-markdown-color" data-color-mode="light">
               <div className="pv-markdown">
-                <MarkdownContent compactImages>{source}</MarkdownContent>
+                <MarkdownContent
+                  compactImages
+                  editableTables={!readOnly}
+                  onTableChange={handleTableChange}
+                >
+                  {source}
+                </MarkdownContent>
               </div>
             </div>
           ),
