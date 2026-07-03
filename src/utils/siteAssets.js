@@ -1,6 +1,7 @@
 import logoBogotaUrl from "../../public/site-template/assets/logo-bogota-educacion.png";
 import logoUniminutoUrl from "../../public/site-template/assets/logo-uniminuto.png";
 import logoUniminutoPdfUrl from "../../public/site-template/assets/logo-uniminuto-pdf.png";
+import logoStemUrl from "../../public/site-template/assets/logo-olimpiadas-stem.png";
 
 async function blobToBase64(blob) {
   return new Promise((resolve, reject) => {
@@ -26,10 +27,11 @@ async function fetchAssetBase64(url) {
 
 /** Archivos binarios del sitio público para publicar en GitHub. */
 export async function loadSiteAssetFiles() {
-  const [bogota, uniminuto, uniminutoPdf] = await Promise.all([
+  const [bogota, uniminuto, uniminutoPdf, stem] = await Promise.all([
     fetchAssetBase64(logoBogotaUrl),
     fetchAssetBase64(logoUniminutoUrl),
     fetchAssetBase64(logoUniminutoPdfUrl),
+    fetchAssetBase64(logoStemUrl),
   ]);
 
   return {
@@ -45,16 +47,22 @@ export async function loadSiteAssetFiles() {
       encoding: "base64",
       content: uniminutoPdf,
     },
+    "assets/logo-olimpiadas-stem.png": {
+      encoding: "base64",
+      content: stem,
+    },
   };
 }
 
 export const SITE_LOGO_PATHS = {
   bogota: "assets/logo-bogota-educacion.png",
   uniminuto: "assets/logo-uniminuto.png",
+  stem: "assets/logo-olimpiadas-stem.png",
 };
 
 /** URLs empaquetadas para @react-pdf/renderer (Image). */
 export const PDF_LOGO_SOURCES = {
   bogota: logoBogotaUrl,
   uniminuto: logoUniminutoPdfUrl,
+  stem: logoStemUrl,
 };

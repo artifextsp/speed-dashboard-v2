@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { PHASE_COLORS } from "../../utils/constants";
+import { InstitutionLogos } from "../ui/InstitutionLogos";
 
 export function LoginScreen({ onLogin }) {
   const [email, setEmail] = useState("");
@@ -24,6 +25,7 @@ export function LoginScreen({ onLogin }) {
     <div className="login-wrapper">
       <div className="login-card">
         <div className="login-header">
+          <InstitutionLogos className="login-logos" />
           <h1 className="login-title" style={{ color: PHASE_COLORS.A }}>
             SPEED
           </h1>

@@ -12,6 +12,7 @@ import { resolveClassComponents } from "../../kernel/legacyMigration";
 import { withDisplayNumbers } from "../../kernel/componentManager";
 import { getStatusConfig } from "../../kernel/statusManager";
 import { DownloadPdfButton } from "../export/DownloadPdfButton";
+import { SiteBrandHeader } from "../ui/InstitutionLogos";
 
 function AccordionSection({ number, title, description, color, children, defaultOpen = false }) {
   const [open, setOpen] = useState(defaultOpen);
@@ -50,6 +51,7 @@ export function SessionPreview({ form, phase, videos = [], onBack }) {
   return (
     <div className="pv-wrapper">
       <div className="pv-container">
+        <SiteBrandHeader />
         <div className="pv-toolbar">
           <button className="btn-back" onClick={onBack}>
             <IconArrowLeft size={16} /> Volver al editor

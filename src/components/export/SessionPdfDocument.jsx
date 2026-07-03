@@ -76,6 +76,11 @@ const styles = StyleSheet.create({
     height: 36,
     objectFit: "contain",
   },
+  logoStem: {
+    width: 72,
+    height: 52,
+    objectFit: "contain",
+  },
   topRule: {
     height: 3,
     backgroundColor: SPEED_ORANGE,
@@ -485,6 +490,7 @@ export function SessionPdfDocument({ session, phase, videos = [] }) {
           <View style={styles.instHeaderLogos}>
             <Image src={PDF_LOGO_SOURCES.uniminuto} style={styles.logoUniminuto} />
             <Image src={PDF_LOGO_SOURCES.bogota} style={styles.logoBogota} />
+            <Image src={PDF_LOGO_SOURCES.stem} style={styles.logoStem} />
           </View>
         </View>
         <Text style={styles.phaseTag}>

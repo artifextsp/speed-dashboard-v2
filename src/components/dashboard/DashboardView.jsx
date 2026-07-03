@@ -14,6 +14,7 @@ import { SyllabusExportButtons } from "./SyllabusExportButtons";
 import { StatsBar } from "./StatsBar";
 import { ChangePasswordModal } from "../ui/ChangePasswordModal";
 import { PublishButton } from "../publish/PublishButton";
+import { InstitutionLogos } from "../ui/InstitutionLogos";
 
 export function DashboardView({
   phases,
@@ -134,16 +135,19 @@ export function DashboardView({
   return (
     <div className="dashboard">
       <header className="dashboard__header">
-        <div>
-          <h1 className="dashboard__title">
-            <span style={{ color: PHASE_COLORS.A }}>SPEED</span> Dashboard
-          </h1>
-          <p className="dashboard__subtitle">
-            Piloto de robótica educativa · Uniminuto 2026
-            {isSupervisor
-              ? " · Modo supervisión (solo lectura)"
-              : " · Planifica y diseña las clases del curso"}
-          </p>
+        <div className="dashboard__header-main">
+          <div>
+            <h1 className="dashboard__title">
+              <span style={{ color: PHASE_COLORS.A }}>SPEED</span> Dashboard
+            </h1>
+            <p className="dashboard__subtitle">
+              Piloto de robótica educativa · Uniminuto 2026
+              {isSupervisor
+                ? " · Modo supervisión (solo lectura)"
+                : " · Planifica y diseña las clases del curso"}
+            </p>
+          </div>
+          <InstitutionLogos className="dashboard__logos" />
         </div>
         <div className="dashboard__user">
           <div className="dashboard__user-info">

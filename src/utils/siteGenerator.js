@@ -13,7 +13,7 @@ import { markdownToHtml } from "./markdownToHtml";
 import { generateSessionPdfBase64 } from "./sessionPdfExporter.jsx";
 import { loadSiteAssetFiles, SITE_LOGO_PATHS } from "./siteAssets.js";
 
-const SITE_BUILD_VERSION = "2026-06-28-drive-image-fallback-v1";
+const SITE_BUILD_VERSION = "2026-07-02-institution-logos-v1";
 
 export { SITE_BUILD_VERSION };
 
@@ -91,8 +91,9 @@ function renderSiteHeader() {
         <p class="site-header__tagline">Robótica educativa para docentes usando metodologías ABP.</p>
       </div>
       <div class="site-header__logos">
-        <img src="${SITE_LOGO_PATHS.uniminuto}" alt="Corporación Universitaria Uniminuto" class="site-header__logo site-header__logo--uniminuto" />
+        <img src="${SITE_LOGO_PATHS.uniminuto}" alt="Corporación Universitaria UNIMINUTO" class="site-header__logo site-header__logo--uniminuto" />
         <img src="${SITE_LOGO_PATHS.bogota}" alt="Secretaría de Educación de Bogotá" class="site-header__logo site-header__logo--bogota" />
+        <img src="${SITE_LOGO_PATHS.stem}" alt="Olimpiadas STEM" class="site-header__logo site-header__logo--stem" />
       </div>
     </div>
   </header>`;

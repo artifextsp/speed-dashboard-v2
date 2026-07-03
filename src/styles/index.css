@@ -80,6 +80,98 @@ body {
   margin-bottom: 32px;
 }
 
+.login-logos {
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.institution-logos {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.institution-logos__img {
+  display: block;
+  object-fit: contain;
+}
+
+.institution-logos__img--uniminuto {
+  height: 52px;
+  max-width: 150px;
+}
+
+.institution-logos__img--bogota {
+  height: 48px;
+  max-width: 170px;
+}
+
+.institution-logos__img--stem {
+  height: 50px;
+  max-width: 110px;
+}
+
+.site-header {
+  margin-bottom: 28px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--color-border-tertiary);
+}
+
+.site-header__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.site-header__titles {
+  flex: 1;
+  min-width: 240px;
+  text-align: left;
+}
+
+.site-header__logos {
+  justify-content: flex-end;
+}
+
+.site-header__brand {
+  font-size: clamp(2rem, 4vw, 2.75rem);
+  font-weight: 800;
+  color: #d85a30;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+
+.site-header__tagline {
+  margin-top: 8px;
+  font-size: 15px;
+  font-style: italic;
+  color: #9ca3af;
+  line-height: 1.45;
+  max-width: 36rem;
+}
+
+.site-header__logo--uniminuto,
+.institution-logos__img--uniminuto {
+  height: 52px;
+  max-width: 150px;
+}
+
+.site-header__logo--bogota,
+.institution-logos__img--bogota {
+  height: 48px;
+  max-width: 170px;
+}
+
+.site-header__logo--stem,
+.institution-logos__img--stem {
+  height: 50px;
+  max-width: 110px;
+}
+
 .login-title {
   font-size: 28px;
   font-weight: 600;
@@ -317,11 +409,46 @@ body {
 
 .dashboard__header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   margin-bottom: 24px;
   flex-wrap: wrap;
   gap: 12px;
+}
+
+.dashboard__header-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex: 1;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.dashboard__logos {
+  justify-content: flex-end;
+}
+
+@media (max-width: 900px) {
+  .dashboard__header-main {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .dashboard__logos {
+    justify-content: flex-start;
+  }
+
+  .site-header__bar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .site-header__logos {
+    justify-content: flex-start;
+    width: 100%;
+  }
 }
 
 .dashboard__title {

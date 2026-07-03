@@ -65,6 +65,11 @@ const styles = StyleSheet.create({
     height: 36,
     objectFit: "contain",
   },
+  logoStem: {
+    width: 72,
+    height: 52,
+    objectFit: "contain",
+  },
   docTitle: {
     fontSize: 20,
     fontWeight: 700,
@@ -155,6 +160,7 @@ export function SyllabusPdfDocument({ outline }) {
           <View style={styles.instHeaderLogos}>
             <Image src={PDF_LOGO_SOURCES.uniminuto} style={styles.logoUniminuto} />
             <Image src={PDF_LOGO_SOURCES.bogota} style={styles.logoBogota} />
+            <Image src={PDF_LOGO_SOURCES.stem} style={styles.logoStem} />
           </View>
         </View>
 
