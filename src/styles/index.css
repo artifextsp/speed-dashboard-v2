@@ -96,6 +96,7 @@ body {
 .institution-logos__img {
   display: block;
   object-fit: contain;
+  background: transparent;
 }
 
 .institution-logos__img--uniminuto {

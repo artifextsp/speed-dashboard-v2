@@ -8,7 +8,7 @@ import path from "node:path";
 import { publishToGitHub } from "../src/utils/githubPublisher.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const SITE_BUILD_VERSION = "2026-07-02-institution-logos-v1";
+const SITE_BUILD_VERSION = "2026-07-02-logos-transparent-v1";
 
 function readAssetBase64(relativePath) {
   return readFileSync(path.join(root, relativePath)).toString("base64");
