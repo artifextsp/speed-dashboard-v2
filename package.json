@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "publish:site": "node --env-file=.env.local scripts/publish-site.mjs",
     "publish:logos": "node --env-file=.env.local scripts/publish-logos-only.mjs",
-    "logos:transparent": "python3 scripts/remove-logo-backgrounds.py"
+    "logos:transparent": "python3 scripts/remove-logo-backgrounds.py",
+    "verify:styled-blocks": "node scripts/verify-styled-blocks.mjs"
   },
   "dependencies": {
     "@react-pdf/renderer": "^4.5.1",

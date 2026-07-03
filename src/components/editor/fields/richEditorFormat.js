@@ -1,3 +1,11 @@
+import {
+  compileMarkdownToHtml,
+  expandSelectionToStyledBlock,
+  STYLED_BLOCK_CLASS,
+} from "../../../kernel/styledBlockCompile.js";
+
+export { STYLED_BLOCK_CLASS };
+
 export const FONT_SIZE_OPTIONS = [10, 11, 12, 13, 14, 16, 18, 20, 24, 28, 32];
 
 export const TEXT_COLOR_PRESETS = [
@@ -11,8 +19,6 @@ export const TEXT_COLOR_PRESETS = [
   "#9333EA",
   "#64748B",
 ];
-
-export const STYLED_BLOCK_CLASS = "markdown-styled-block";
 
 export function isMultiLine(text) {
   return String(text ?? "").includes("\n");
@@ -217,7 +223,8 @@ export function buildFormattedHtml(content, formats) {
 
   const styleAttr = styles.join("; ");
   if (needsBlockWrapper(content, formats)) {
-    return `<div class="${STYLED_BLOCK_CLASS}" style="${styleAttr}">\n${html}\n</div>`;
+    const innerHtml = compileMarkdownToHtml(html);
+    return `<div class="${STYLED_BLOCK_CLASS}" style="${styleAttr}">${innerHtml}</div>`;
   }
 
   return `<span style="${styleAttr}">${html}</span>`;
@@ -228,8 +235,18 @@ export function getSelectionText(state) {
 }
 
 function applyFormat(state, api, updater) {
-  const text = getSelectionText(state);
+  const fullText = state?.text ?? "";
+  const selection = state?.selection;
+  const selStart = selection?.start ?? 0;
+  const selEnd = selection?.end ?? selStart;
+  const expanded = expandSelectionToStyledBlock(fullText, selStart, selEnd);
+  const text = expanded.text || getSelectionText(state);
   if (!text) return null;
+
+  if (expanded.start !== selStart || expanded.end !== selEnd) {
+    api.setSelectionRange?.({ start: expanded.start, end: expanded.end });
+  }
+
   const { content, formats } = extractFormats(text);
   updater(formats);
   const replacement = buildFormattedHtml(content, formats);
@@ -272,8 +289,18 @@ export function applyFontSizeFormat(state, api, sizePx) {
 }
 
 export function applyCopiedFormats(state, api, copiedFormats) {
-  const text = getSelectionText(state);
+  const fullText = state?.text ?? "";
+  const selection = state?.selection;
+  const selStart = selection?.start ?? 0;
+  const selEnd = selection?.end ?? selStart;
+  const expanded = expandSelectionToStyledBlock(fullText, selStart, selEnd);
+  const text = expanded.text || getSelectionText(state);
   if (!text) return null;
+
+  if (expanded.start !== selStart || expanded.end !== selEnd) {
+    api.setSelectionRange?.({ start: expanded.start, end: expanded.end });
+  }
+
   const template = cloneFormats(copiedFormats);
   if (!hasActiveFormats(template)) return null;
   const { content } = extractFormats(text);

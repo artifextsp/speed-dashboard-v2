@@ -1,7 +1,8 @@
 import { expandMarkdownVerticalSpace } from "./markdownSpacing.js";
+import { compileStyledBlocks } from "./styledBlockCompile.js";
 
 const PROTECTED_BLOCK_RE =
-  /(<div class="markdown-table-wrap"[\s\S]*?<\/div>|<div class="markdown-embed markdown-embed--video">[\s\S]*?<\/div>(?:\s*<p class="markdown-video-link">[\s\S]*?<\/p>)?|<div class="markdown-spacer"><\/div>|```[\s\S]*?```|`[^`\n]+`)/gi;
+  /(<div class="markdown-styled-block"[\s\S]*?<\/div>|<div class="markdown-table-wrap"[\s\S]*?<\/div>|<div class="markdown-embed markdown-embed--video">[\s\S]*?<\/div>(?:\s*<p class="markdown-video-link">[\s\S]*?<\/p>)?|<div class="markdown-spacer"><\/div>|```[\s\S]*?```|`[^`\n]+`)/gi;
 
 function protectBlocks(markdown) {
   const tokens = [];
@@ -91,7 +92,7 @@ export function repairUnparsedHeadings(markdown) {
 }
 
 function looksLikeBlockMarkdown(text) {
-  return /!\[[^\]]*\]\(|^#{1,6}\s|^\s*[-*+]\s+\S/m.test(text);
+  return /!\[[^\]]*\]\(|^#{1,6}\s|^\s*[-*+]\s+\S|^\s*\d+\.\s+\S/m.test(text);
 }
 
 /** Convierte <p> con sintaxis markdown a texto plano para que el parser la procese. */
@@ -176,5 +177,6 @@ export function prepareMarkdownForRender(markdown) {
   out = ensureSpacerBoundaries(out);
   out = repairUnparsedHeadings(out);
   out = repairUnparsedEmphasis(out);
+  out = compileStyledBlocks(out);
   return out;
 }

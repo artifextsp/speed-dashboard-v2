@@ -2222,11 +2222,13 @@ body {
 
 .pv-markdown .markdown-styled-block {
   margin-bottom: 12px;
+  color: var(--color-text-primary, #111827);
 }
 
 .pv-markdown .markdown-styled-block ol,
 .pv-markdown .markdown-styled-block ul,
-.pv-markdown .markdown-styled-block p {
+.pv-markdown .markdown-styled-block p,
+.pv-markdown .markdown-styled-block li {
   color: inherit;
   font-size: inherit;
 }
