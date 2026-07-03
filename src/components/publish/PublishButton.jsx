@@ -13,25 +13,43 @@ import {
 } from "../../utils/githubPublisher";
 import {
   fetchLiveSiteBuildVersion,
+  fetchLiveSitePublishedAt,
   getPublicSiteUrl,
+  hasUnpublishedSessionChanges,
   isSiteOutdated,
 } from "../../utils/liveSiteStatus";
 
-export function PublishButton({ phases, sessions, onResult }) {
+function formatPublishedAt(iso) {
+  if (!iso) return null;
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toLocaleString("es-CO", {
+    dateStyle: "short",
+    timeStyle: "short",
+  });
+}
+
+export function PublishButton({ phases, sessions, fetchFreshSessions, onResult }) {
   const [publishing, setPublishing] = useState(false);
   const [liveVersion, setLiveVersion] = useState(null);
+  const [livePublishedAt, setLivePublishedAt] = useState(null);
   const [liveCheckError, setLiveCheckError] = useState(null);
   const accessible = getAccessibleSessions(sessions);
   const config = getGitHubConfig();
   const configOk = validateGitHubConfig(config).ok;
   const siteOutdated = isSiteOutdated(liveVersion, SITE_BUILD_VERSION);
+  const hasPendingEdits = hasUnpublishedSessionChanges(sessions, livePublishedAt);
   const publicSiteUrl = getPublicSiteUrl();
 
   const refreshLiveVersion = async () => {
     try {
       setLiveCheckError(null);
-      const version = await fetchLiveSiteBuildVersion();
+      const [version, publishedAt] = await Promise.all([
+        fetchLiveSiteBuildVersion(),
+        fetchLiveSitePublishedAt(),
+      ]);
       setLiveVersion(version);
+      setLivePublishedAt(publishedAt);
     } catch (err) {
       setLiveCheckError(err.message || "No se pudo verificar el sitio");
     }
@@ -48,16 +66,28 @@ export function PublishButton({ phases, sessions, onResult }) {
       return;
     }
 
-    if (sessions.length === 0) {
+    let freshSessions = sessions;
+    try {
+      if (fetchFreshSessions) {
+        freshSessions = await fetchFreshSessions();
+      }
+    } catch (err) {
+      onResult?.(err.message || "No se pudieron recargar las clases antes de publicar", true);
+      return;
+    }
+
+    if (freshSessions.length === 0) {
       onResult?.("No hay sesiones en el temario para publicar.", true);
       return;
     }
 
+    const freshAccessible = getAccessibleSessions(freshSessions);
+
     const confirmed = window.confirm(
       `Los cambios del dashboard NO llegan solos a proyectospeed.com.\n\n` +
         `Debes publicar para que los estudiantes vean el contenido nuevo.\n\n` +
-        `Se enviará el temario (${sessions.length} clases) a ${config.owner}/${config.repo}.\n` +
-        `• ${accessible.length} clase(s) accesibles + PDF\n` +
+        `Se enviará el temario (${freshSessions.length} clases) a ${config.owner}/${config.repo}.\n` +
+        `• ${freshAccessible.length} clase(s) accesibles + PDF\n` +
         `• Build del generador: ${SITE_BUILD_VERSION}\n\n` +
         `¿Publicar ahora?`
     );
@@ -66,9 +96,9 @@ export function PublishButton({ phases, sessions, onResult }) {
     setPublishing(true);
     try {
       const videosBySessionId = await fetchSessionVideosMap(
-        accessible.map((s) => s.id)
+        freshAccessible.map((s) => s.id)
       );
-      const { files, stats } = await generateSiteFiles(phases, sessions, {
+      const { files, stats } = await generateSiteFiles(phases, freshSessions, {
         videosBySessionId,
       });
       const result = await publishToGitHub(files);
@@ -123,29 +153,51 @@ export function PublishButton({ phases, sessions, onResult }) {
             ) : (
               <> · Verificando sitio…</>
             )}
+            {livePublishedAt ? (
+              <> · Publicado: {formatPublishedAt(livePublishedAt)}</>
+            ) : null}
           </span>
         </div>
       </div>
 
-      {siteOutdated && !publishing && (
+      {hasPendingEdits && !publishing && (
         <div className="publish-bar__alert" role="status">
           <IconAlertTriangle size={18} />
           <div>
-            <strong>El sitio de estudiantes está desactualizado.</strong>
+            <strong>Hay cambios guardados que los estudiantes aún no ven.</strong>
             <p>
-              Lo que ves en el dashboard (vista previa) es solo para diseñadores.
-              Los estudiantes leen <a href={publicSiteUrl} target="_blank" rel="noreferrer">{publicSiteUrl}</a>,
-              que ahora tiene build <strong>{liveVersion || "antiguo"}</strong>.
-              Haz clic en <strong>Publicar al sitio</strong> para subir{" "}
-              <strong>{SITE_BUILD_VERSION}</strong>.
+              Guardar en el editor no actualiza <a href={publicSiteUrl} target="_blank" rel="noreferrer">{publicSiteUrl}</a>.
+              {livePublishedAt ? (
+                <>
+                  {" "}
+                  La última publicación fue el <strong>{formatPublishedAt(livePublishedAt)}</strong>, pero
+                  hay clases editadas después.
+                </>
+              ) : (
+                <> Aún no hay registro de publicación reciente en el sitio.</>
+              )}
+              {" "}Haz clic en <strong>Publicar al sitio</strong> y espera el mensaje verde de éxito.
             </p>
           </div>
         </div>
       )}
 
-      {!siteOutdated && liveVersion && !publishing && (
+      {siteOutdated && !hasPendingEdits && !publishing && (
+        <div className="publish-bar__alert" role="status">
+          <IconAlertTriangle size={18} />
+          <div>
+            <strong>El sitio de estudiantes usa una versión antigua del generador.</strong>
+            <p>
+              El build publicado es <strong>{liveVersion || "antiguo"}</strong> y el generador actual es{" "}
+              <strong>{SITE_BUILD_VERSION}</strong>. Publica de nuevo para aplicar mejoras del sistema.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {!siteOutdated && !hasPendingEdits && liveVersion && !publishing && (
         <p className="publish-bar__ok">
-          Sitio de estudiantes sincronizado con el generador actual.
+          Sitio de estudiantes sincronizado con las clases guardadas.
         </p>
       )}
     </div>

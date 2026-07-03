@@ -82,10 +82,13 @@ export function useSessions(user) {
       .order("sort_order");
     if (err) {
       setError(err.message);
-    } else {
-      setSessions(data || []);
+      setLoading(false);
+      return [];
     }
+    const next = data || [];
+    setSessions(next);
     setLoading(false);
+    return next;
   }, []);
 
   useEffect(() => {
@@ -261,6 +264,7 @@ export function useSessions(user) {
     loading,
     error,
     reload: load,
+    fetchFreshSessions: load,
     saveSession,
     createSession,
     updateSessionMetadata,

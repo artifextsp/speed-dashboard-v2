@@ -24,6 +24,7 @@ export function DashboardView({
   onEditSession,
   onChangePassword,
   onPublishResult,
+  fetchFreshSessions,
   onCreateSession,
   onUpdateSessionMetadata,
   onDeleteSession,
@@ -179,6 +180,7 @@ export function DashboardView({
         <PublishButton
           phases={phases}
           sessions={sortedSessions}
+          fetchFreshSessions={fetchFreshSessions}
           onResult={(msg, isError, meta) => {
             onPublishResult?.(msg, isError, meta);
           }}

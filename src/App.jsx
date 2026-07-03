@@ -25,6 +25,7 @@ export default function App() {
     updateSessionMetadata,
     deleteSession,
     getVideos,
+    fetchFreshSessions,
   } = useSessions(user);
 
   const [editingSession, setEditingSession] = useState(null);
@@ -184,6 +185,7 @@ export default function App() {
           onEditSession={handleEditSession}
           onChangePassword={changePassword}
           onPublishResult={(msg, isError) => showToast(msg, isError)}
+          fetchFreshSessions={fetchFreshSessions}
           onCreateSession={(data) => createSession(data, user?.email)}
           onUpdateSessionMetadata={(data) =>
             updateSessionMetadata(data, user?.email)

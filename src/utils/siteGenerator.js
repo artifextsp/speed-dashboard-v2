@@ -13,7 +13,8 @@ import { markdownToHtml } from "./markdownToHtml";
 import { generateSessionPdfBase64 } from "./sessionPdfExporter.jsx";
 import { loadSiteAssetFiles, SITE_LOGO_PATHS } from "./siteAssets.js";
 
-const SITE_BUILD_VERSION = "2026-07-02-logos-transparent-v1";
+const SITE_BUILD_VERSION = "2026-07-03-publish-fresh-v1";
+const SITE_PUBLISHED_AT = () => new Date().toISOString();
 
 export { SITE_BUILD_VERSION };
 
@@ -174,6 +175,7 @@ function renderSessionPage(session, phase) {
   <title>${escapeHtml(titlePrefix + session.title)} · SPEED</title>
   <link rel="stylesheet" href="../site.css" />
   <!-- SPEED build: ${SITE_BUILD_VERSION} -->
+  <!-- SPEED published-at: ${SITE_PUBLISHED_AT()} -->
 </head>
 <body>
   <div class="pv-wrapper">
@@ -296,6 +298,7 @@ function renderIndexPage(phases, allSessions) {
   <title>SPEED · Guía del curso</title>
   <link rel="stylesheet" href="site.css" />
   <!-- SPEED build: ${SITE_BUILD_VERSION} -->
+  <!-- SPEED published-at: ${SITE_PUBLISHED_AT()} -->
 </head>
 <body>
   <div class="pv-wrapper">
