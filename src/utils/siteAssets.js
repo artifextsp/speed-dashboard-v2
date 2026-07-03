@@ -1,7 +1,15 @@
-import logoBogotaUrl from "../../public/site-template/assets/logo-bogota-educacion.png";
-import logoUniminutoUrl from "../../public/site-template/assets/logo-uniminuto.png";
-import logoUniminutoPdfUrl from "../../public/site-template/assets/logo-uniminuto-pdf.png";
-import logoStemUrl from "../../public/site-template/assets/logo-olimpiadas-stem.png";
+/**
+ * Logos del sitio público servidos desde /public sin hash de Vite.
+ * Evita fallos al publicar en producción (fetch a /assets/logo-*.png inexistente).
+ */
+const PUBLIC_SITE_ASSETS = "/site-template/assets";
+
+const SITE_ASSET_URLS = {
+  bogota: `${PUBLIC_SITE_ASSETS}/logo-bogota-educacion.png`,
+  uniminuto: `${PUBLIC_SITE_ASSETS}/logo-uniminuto.png`,
+  uniminutoPdf: `${PUBLIC_SITE_ASSETS}/logo-uniminuto-pdf.png`,
+  stem: `${PUBLIC_SITE_ASSETS}/logo-olimpiadas-stem.png`,
+};
 
 async function blobToBase64(blob) {
   return new Promise((resolve, reject) => {
@@ -27,31 +35,23 @@ async function fetchAssetBase64(url) {
 
 /** Archivos binarios del sitio público para publicar en GitHub. */
 export async function loadSiteAssetFiles() {
-  const [bogota, uniminuto, uniminutoPdf, stem] = await Promise.all([
-    fetchAssetBase64(logoBogotaUrl),
-    fetchAssetBase64(logoUniminutoUrl),
-    fetchAssetBase64(logoUniminutoPdfUrl),
-    fetchAssetBase64(logoStemUrl),
-  ]);
+  const entries = [
+    ["assets/logo-bogota-educacion.png", SITE_ASSET_URLS.bogota],
+    ["assets/logo-uniminuto.png", SITE_ASSET_URLS.uniminuto],
+    ["assets/logo-uniminuto-pdf.png", SITE_ASSET_URLS.uniminutoPdf],
+    ["assets/logo-olimpiadas-stem.png", SITE_ASSET_URLS.stem],
+  ];
 
-  return {
-    "assets/logo-bogota-educacion.png": {
-      encoding: "base64",
-      content: bogota,
-    },
-    "assets/logo-uniminuto.png": {
-      encoding: "base64",
-      content: uniminuto,
-    },
-    "assets/logo-uniminuto-pdf.png": {
-      encoding: "base64",
-      content: uniminutoPdf,
-    },
-    "assets/logo-olimpiadas-stem.png": {
-      encoding: "base64",
-      content: stem,
-    },
-  };
+  const files = {};
+  await Promise.all(
+    entries.map(async ([path, url]) => {
+      files[path] = {
+        encoding: "base64",
+        content: await fetchAssetBase64(url),
+      };
+    })
+  );
+  return files;
 }
 
 export const SITE_LOGO_PATHS = {
@@ -60,9 +60,9 @@ export const SITE_LOGO_PATHS = {
   stem: "assets/logo-olimpiadas-stem.png",
 };
 
-/** URLs empaquetadas para @react-pdf/renderer (Image). */
+/** URLs para @react-pdf/renderer (Image) en el navegador. */
 export const PDF_LOGO_SOURCES = {
-  bogota: logoBogotaUrl,
-  uniminuto: logoUniminutoPdfUrl,
-  stem: logoStemUrl,
+  bogota: SITE_ASSET_URLS.bogota,
+  uniminuto: SITE_ASSET_URLS.uniminutoPdf,
+  stem: SITE_ASSET_URLS.stem,
 };
