@@ -10,12 +10,19 @@ import {
 } from "../src/components/editor/fields/richEditorFormat.js";
 import { repairBrokenInlineTags } from "../src/kernel/styledBlockCompile.js";
 
-function renderMarkdown(md) {
+function renderWithDivComponent(md) {
   const source = prepareMarkdownForRender(md);
   return renderToStaticMarkup(
     React.createElement(
       ReactMarkdown,
-      { remarkPlugins: [remarkGfm], rehypePlugins: [rehypeRaw] },
+      {
+        remarkPlugins: [remarkGfm],
+        rehypePlugins: [rehypeRaw],
+        components: {
+          div: ({ className, children, ...props }) =>
+            React.createElement("div", { className, ...props }, children),
+        },
+      },
       source
     )
   );
@@ -35,20 +42,44 @@ const userBroken = `## <span style="color: #F97316">Objetivos del curso</span>
 ---
 
 <div class="markdown-styled-block" style="font-size: 14px;">
-1. <strong>Comprender</strong> los fundamentos básicos de la electricidad y la electrónica.
-<strongIdentificar conceptos</strong> como voltaje, corriente, resistencia, polaridad y su aplicación en circuitos reales.
 
----
+1. <strong>Comprender</strong> los fundamentos básicos de la electricidad y la electrónica.
+
+<strong>Identificar conceptos</strong> como voltaje, corriente, resistencia, polaridad y su aplicación en circuitos reales.
 
 2. <strong>Diseñar</strong>, construir y analizar circuitos en serie y en paralelo.
+
 Interpretar el comportamiento del voltaje y la corriente según la configuración del circuito.
+
 </div>`;
 
-const rendered = renderMarkdown(userBroken);
+const rendered = renderWithDivComponent(userBroken);
 assert(rendered.includes("Comprender"), "renderiza Comprender con HTML roto");
 assert(rendered.includes("Identificar conceptos"), "renderiza Identificar conceptos");
 assert(rendered.includes("Diseñar"), "renderiza Diseñar");
 assert(rendered.includes("<ol"), "convierte listas numeradas a <ol>");
+
+const emptyDivBug = renderToStaticMarkup(
+  React.createElement(
+    ReactMarkdown,
+    {
+      remarkPlugins: [remarkGfm],
+      rehypePlugins: [rehypeRaw],
+      components: {
+        div: ({ className, children, ...props }) =>
+          React.createElement("div", { className, ...props }),
+      },
+    },
+    '<div class="markdown-styled-block" style="font-size:14px"><ol><li>Visible</li></ol></div>'
+  )
+);
+assert(!emptyDivBug.includes("Visible"), "reproduce div que descarta children al desestructurar");
+assert(
+  renderWithDivComponent(
+    '<div class="markdown-styled-block" style="font-size:14px"><ol><li>Visible</li></ol></div>'
+  ).includes("Visible"),
+  "div con children muestra contenido del bloque estilizado"
+);
 
 const wrapped = buildFormattedHtml(
   `1. **Uno**\n2. **Dos**`,

@@ -46,7 +46,7 @@ export function MarkdownContent({
             {children}
           </table>
         ),
-        div: ({ className, children, ...props }) => {
+        div: ({ className, children, node: _node, ...props }) => {
           if (className?.includes("markdown-spacer")) {
             return <div className="markdown-spacer" aria-hidden="true" />;
           }
@@ -65,7 +65,11 @@ export function MarkdownContent({
               </div>
             );
           }
-          return <div className={className} {...props} />;
+          return (
+            <div className={className} {...props}>
+              {children}
+            </div>
+          );
         },
         iframe: ({ src, title, ...props }) => {
           const ytId = extractYouTubeId(src || "");
