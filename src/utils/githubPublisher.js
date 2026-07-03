@@ -98,11 +98,18 @@ async function getBranchRef(owner, repo, branch, token) {
   }
 }
 
+function readEnv(key, fallback = "") {
+  if (typeof import.meta !== "undefined" && import.meta.env?.[key]) {
+    return import.meta.env[key];
+  }
+  return process.env[key] || fallback;
+}
+
 export function getGitHubConfig() {
-  const owner = import.meta.env.VITE_GITHUB_OWNER || "artifextsp";
-  const repo = import.meta.env.VITE_GITHUB_REPO || "PILOTO";
-  const branch = import.meta.env.VITE_GITHUB_BRANCH || "main";
-  const token = import.meta.env.VITE_GITHUB_PAT || "";
+  const owner = readEnv("VITE_GITHUB_OWNER", "artifextsp");
+  const repo = readEnv("VITE_GITHUB_REPO", "PILOTO");
+  const branch = readEnv("VITE_GITHUB_BRANCH", "main");
+  const token = readEnv("VITE_GITHUB_PAT", "");
 
   return { owner, repo, branch, token };
 }
