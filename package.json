@@ -11,7 +11,8 @@
     "publish:site": "node --env-file=.env.local scripts/publish-site.mjs",
     "publish:logos": "node --env-file=.env.local scripts/publish-logos-only.mjs",
     "logos:transparent": "python3 scripts/remove-logo-backgrounds.py",
-    "verify:styled-blocks": "node scripts/verify-styled-blocks.mjs"
+    "verify:styled-blocks": "node scripts/verify-styled-blocks.mjs",
+    "publish:site-assets": "node --env-file=.env.local scripts/publish-site-assets.mjs"
   },
   "dependencies": {
     "@react-pdf/renderer": "^4.5.1",

@@ -47,7 +47,10 @@ export function extractGoogleDriveFileId(url) {
     const normalized = normalizeUrl(url);
     const parsed = new URL(normalized);
 
-    if (!parsed.hostname.includes("google.com")) return null;
+    const isGoogleHost =
+      parsed.hostname.includes("google.com") ||
+      parsed.hostname.includes("googleusercontent.com");
+    if (!isGoogleHost) return null;
 
     const pathId = parsed.pathname.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
     if (pathId) return pathId[1];
