@@ -3141,6 +3141,27 @@ button.markdown-image-card__frame {
   color: var(--color-text-secondary);
 }
 
+.attendance-roll-list__row {
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+}
+
+.attendance-roll-list__row .attendance-roll-list__item {
+  flex: 1;
+}
+
+.attendance-roll-list__delete {
+  flex-shrink: 0;
+}
+
+.attendance-modal__small-hint {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--color-text-tertiary);
+  line-height: 1.4;
+}
+
 .attendance-modal__main {
   border: 1px solid var(--color-border-tertiary);
   border-radius: var(--radius-md);

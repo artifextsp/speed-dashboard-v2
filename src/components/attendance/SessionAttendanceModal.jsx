@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { IconCheck, IconClipboardList, IconPlus, IconX } from "@tabler/icons-react";
+import { IconCheck, IconClipboardList, IconPlus, IconTrash, IconX } from "@tabler/icons-react";
 import { useAttendance } from "../../hooks/useAttendance";
 import { useStudents } from "../../hooks/useStudents";
 import {
@@ -25,6 +25,7 @@ export function SessionAttendanceModal({
     createRollCall,
     syncRollCallRecords,
     updateRecordStatus,
+    deleteRollCall,
     updateRollCallLabel,
   } = useAttendance(user);
 
@@ -128,6 +129,27 @@ export function SessionAttendanceModal({
     }
   };
 
+  const handleDeleteRollCall = async (rollCall, event) => {
+    event.stopPropagation();
+    const ok = window.confirm(
+      `¿Eliminar el llamado "${rollCall.label || "Llamado a lista"}" del ${formatAttendanceDateTime(
+        rollCall.taken_at
+      )}?\n\nSe borrarán todos los registros de asistencia de ese encuentro. Esta acción no se puede deshacer.`
+    );
+    if (!ok) return;
+    try {
+      await deleteRollCall(rollCall.id);
+      if (selectedRollCallId === rollCall.id) {
+        setSelectedRollCallId(null);
+        setRecords([]);
+      }
+      await loadRollCallsForSession(session.id);
+      onNotify?.("Llamado a lista eliminado");
+    } catch (err) {
+      onNotify?.(err.message || "Error al eliminar el llamado", true);
+    }
+  };
+
   const handleSelectStatus = (recordId, status) => {
     if (readOnly) return;
     setPendingStatuses((prev) => ({ ...prev, [recordId]: status }));
@@ -214,7 +236,7 @@ export function SessionAttendanceModal({
                   onClick={handleCreateRollCall}
                   disabled={creating}
                 >
-                  <IconPlus size={14} /> Nuevo
+                  <IconPlus size={14} /> {creating ? "Creando…" : "Nuevo"}
                 </button>
               )}
             </div>
@@ -233,7 +255,7 @@ export function SessionAttendanceModal({
             ) : (
               <ul className="attendance-roll-list">
                 {rollCalls.map((rc) => (
-                  <li key={rc.id}>
+                  <li key={rc.id} className="attendance-roll-list__row">
                     <button
                       type="button"
                       className={`attendance-roll-list__item${
@@ -244,6 +266,16 @@ export function SessionAttendanceModal({
                       <span>{rc.label || "Llamado a lista"}</span>
                       <small>{formatAttendanceDateTime(rc.taken_at)}</small>
                     </button>
+                    {!readOnly && (
+                      <button
+                        type="button"
+                        className="btn-icon btn-icon--danger attendance-roll-list__delete"
+                        title="Eliminar este llamado"
+                        onClick={(e) => handleDeleteRollCall(rc, e)}
+                      >
+                        <IconTrash size={14} />
+                      </button>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -271,6 +303,10 @@ export function SessionAttendanceModal({
                         </button>
                       </div>
                     )}
+                    <p className="attendance-modal__small-hint">
+                      "Guardar nombre" solo cambia la etiqueta de este encuentro (ej. "Clase 1"). Para
+                      marcar presente/ausente usa los botones de abajo y luego "Registrar asistencia".
+                    </p>
                   </div>
                   <div className="attendance-stats-inline">
                     <span className="att-stat att-stat--present">{stats.present} presentes</span>

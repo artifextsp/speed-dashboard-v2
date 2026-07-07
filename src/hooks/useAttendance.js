@@ -125,6 +125,14 @@ export function useAttendance(user) {
     if (err) throw new Error(err.message);
   };
 
+  const deleteRollCall = async (rollCallId) => {
+    const { error: err } = await supabase
+      .from("attendance_roll_calls")
+      .delete()
+      .eq("id", rollCallId);
+    if (err) throw new Error(err.message);
+  };
+
   const updateRollCallLabel = async (rollCallId, label) => {
     const { error: err } = await supabase
       .from("attendance_roll_calls")
@@ -166,6 +174,7 @@ export function useAttendance(user) {
     createRollCall,
     syncRollCallRecords,
     updateRecordStatus,
+    deleteRollCall,
     updateRollCallLabel,
     fetchStatsSummary,
   };
