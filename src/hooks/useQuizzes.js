@@ -221,15 +221,27 @@ export function useQuizzes(user) {
     const questions = await loadQuizQuestions(game.quiz_id);
     const currentQuestion = questions[game.current_question_idx] || null;
 
-    const { data: responses, error: respErr } = await supabase
-      .from("quiz_responses")
-      .select("*, students(id, full_name, student_code)")
-      .eq("game_session_id", gameId);
+    const [{ data: responses, error: respErr }, { data: presence, error: presErr }] =
+      await Promise.all([
+        supabase
+          .from("quiz_responses")
+          .select("*, students(id, full_name, student_code)")
+          .eq("game_session_id", gameId),
+        supabase
+          .from("quiz_session_presence")
+          .select("*, students(id, full_name, student_code)")
+          .eq("game_session_id", gameId)
+          .order("joined_at", { ascending: true }),
+      ]);
     if (respErr) throw new Error(respErr.message);
+    if (presErr) throw new Error(presErr.message);
 
-    const currentResponses = currentQuestion
+    const currentResponses = (currentQuestion
       ? (responses || []).filter((r) => r.question_id === currentQuestion.id)
-      : [];
+      : []
+    ).sort(
+      (a, b) => new Date(a.responded_at).getTime() - new Date(b.responded_at).getTime()
+    );
 
     return {
       game,
@@ -237,17 +249,37 @@ export function useQuizzes(user) {
       currentQuestion,
       responses: responses || [],
       currentResponses,
+      presence: presence || [],
     };
   }, [loadQuizQuestions]);
 
   const loadGameResults = useCallback(async (gameId) => {
-    const { data: responses, error: respErr } = await supabase
-      .from("quiz_responses")
-      .select("*, students(id, full_name, student_code), quiz_questions(id, question_text, sort_order)")
-      .eq("game_session_id", gameId);
+    const [{ data: responses, error: respErr }, { data: presence, error: presErr }] =
+      await Promise.all([
+        supabase
+          .from("quiz_responses")
+          .select("*, students(id, full_name, student_code), quiz_questions(id, question_text, sort_order)")
+          .eq("game_session_id", gameId),
+        supabase
+          .from("quiz_session_presence")
+          .select("*, students(id, full_name, student_code)")
+          .eq("game_session_id", gameId),
+      ]);
     if (respErr) throw new Error(respErr.message);
+    if (presErr) throw new Error(presErr.message);
 
     const byStudent = {};
+    for (const row of presence || []) {
+      const sid = row.student_id;
+      byStudent[sid] = {
+        student_id: sid,
+        student_name: row.students?.full_name || "—",
+        student_code: row.students?.student_code || "—",
+        total_score: 0,
+        responses: [],
+        joined: true,
+      };
+    }
     for (const row of responses || []) {
       const sid = row.student_id;
       if (!byStudent[sid]) {
@@ -257,6 +289,7 @@ export function useQuizzes(user) {
           student_code: row.students?.student_code || "—",
           total_score: 0,
           responses: [],
+          joined: false,
         };
       }
       if (row.is_correct) byStudent[sid].total_score += 1;

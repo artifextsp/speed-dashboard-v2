@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   IconArrowDown,
   IconArrowUp,
@@ -19,13 +19,14 @@ const EMPTY_QUESTION = {
 };
 
 const OPTION_LABELS = [
-  { key: "a", label: "A" },
-  { key: "b", label: "B" },
-  { key: "c", label: "C" },
-  { key: "d", label: "D" },
+  { key: "a", label: "A", color: "quiz-editor__option-tag--a" },
+  { key: "b", label: "B", color: "quiz-editor__option-tag--b" },
+  { key: "c", label: "C", color: "quiz-editor__option-tag--c" },
+  { key: "d", label: "D", color: "quiz-editor__option-tag--d" },
 ];
 
 export function QuizEditorModal({ quiz, onClose, onSave, onNotify }) {
+  const questionsRef = useRef(null);
   const [title, setTitle] = useState(quiz?.title || "");
   const [description, setDescription] = useState(quiz?.description || "");
   const [questions, setQuestions] = useState(
@@ -42,6 +43,7 @@ export function QuizEditorModal({ quiz, onClose, onSave, onNotify }) {
         }))
       : [{ ...EMPTY_QUESTION }]
   );
+  const [focusedIndex, setFocusedIndex] = useState(0);
   const [saving, setSaving] = useState(false);
 
   const updateQuestion = (index, field, value) => {
@@ -51,7 +53,11 @@ export function QuizEditorModal({ quiz, onClose, onSave, onNotify }) {
   };
 
   const addQuestion = () => {
-    setQuestions((prev) => [...prev, { ...EMPTY_QUESTION }]);
+    setQuestions((prev) => [{ ...EMPTY_QUESTION }, ...prev]);
+    setFocusedIndex(0);
+    requestAnimationFrame(() => {
+      questionsRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+    });
   };
 
   const removeQuestion = (index) => {
@@ -60,6 +66,7 @@ export function QuizEditorModal({ quiz, onClose, onSave, onNotify }) {
       return;
     }
     setQuestions((prev) => prev.filter((_, i) => i !== index));
+    setFocusedIndex((current) => Math.max(0, Math.min(current, questions.length - 2)));
   };
 
   const moveQuestion = (index, direction) => {
@@ -70,6 +77,7 @@ export function QuizEditorModal({ quiz, onClose, onSave, onNotify }) {
       [copy[index], copy[next]] = [copy[next], copy[index]];
       return copy;
     });
+    setFocusedIndex(next);
   };
 
   const validate = () => {
@@ -96,11 +104,7 @@ export function QuizEditorModal({ quiz, onClose, onSave, onNotify }) {
     if (!validate()) return;
     setSaving(true);
     try {
-      await onSave({
-        title,
-        description,
-        questions,
-      });
+      await onSave({ title, description, questions });
       onClose();
     } catch (err) {
       onNotify?.(err.message || "Error al guardar cuestionario", true);
@@ -112,23 +116,24 @@ export function QuizEditorModal({ quiz, onClose, onSave, onNotify }) {
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal modal--wide quiz-editor" onClick={(e) => e.stopPropagation()}>
-        <div className="modal__header">
+        <div className="quiz-editor__banner">
           <div>
+            <span className="quiz-editor__eyebrow">Diseño de evaluación</span>
             <h2>{quiz ? "Editar cuestionario" : "Nuevo cuestionario"}</h2>
-            <p className="modal__subtitle">
-              Cada pregunta tiene 4 opciones. El docente controla cuándo mostrar la respuesta
-              correcta durante el juego en vivo.
+            <p className="quiz-editor__intro">
+              Cada pregunta tiene 4 opciones. El docente controla cuándo revelar la respuesta
+              correcta durante la sesión en vivo.
             </p>
           </div>
-          <button type="button" className="btn-icon" onClick={onClose} aria-label="Cerrar">
+          <button type="button" className="btn-icon btn-icon--on-dark" onClick={onClose} aria-label="Cerrar">
             <IconX size={18} />
           </button>
         </div>
 
         <form className="quiz-editor__form" onSubmit={handleSubmit}>
-          <div className="quiz-editor__meta">
+          <section className="quiz-editor__meta-card">
             <label>
-              Título
+              <span>Título del cuestionario</span>
               <input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
@@ -137,119 +142,133 @@ export function QuizEditorModal({ quiz, onClose, onSave, onNotify }) {
               />
             </label>
             <label>
-              Descripción (opcional)
+              <span>Descripción (opcional)</span>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={2}
-                placeholder="Breve descripción del cuestionario"
+                placeholder="Breve descripción para el docente"
               />
             </label>
-          </div>
+          </section>
 
           <div className="quiz-editor__questions">
             <div className="quiz-editor__questions-head">
-              <h3>Preguntas ({questions.length})</h3>
-              <button type="button" className="btn btn--secondary" onClick={addQuestion}>
+              <div>
+                <h3>Preguntas</h3>
+                <p className="quiz-editor__hint">
+                  La nueva pregunta aparece arriba para editarla de inmediato. Usa las flechas para
+                  cambiar el orden en el juego.
+                </p>
+              </div>
+              <button type="button" className="btn btn--primary" onClick={addQuestion}>
                 <IconPlus size={16} /> Agregar pregunta
               </button>
             </div>
 
-            {questions.map((question, index) => (
-              <article key={index} className="quiz-editor__question-card">
-                <div className="quiz-editor__question-head">
-                  <strong>Pregunta {index + 1}</strong>
-                  <div className="quiz-editor__question-actions">
-                    <button
-                      type="button"
-                      className="btn-icon"
-                      title="Subir"
-                      disabled={index === 0}
-                      onClick={() => moveQuestion(index, -1)}
-                    >
-                      <IconArrowUp size={16} />
-                    </button>
-                    <button
-                      type="button"
-                      className="btn-icon"
-                      title="Bajar"
-                      disabled={index === questions.length - 1}
-                      onClick={() => moveQuestion(index, 1)}
-                    >
-                      <IconArrowDown size={16} />
-                    </button>
-                    <button
-                      type="button"
-                      className="btn-icon btn-icon--danger"
-                      title="Eliminar pregunta"
-                      onClick={() => removeQuestion(index)}
-                    >
-                      <IconTrash size={16} />
-                    </button>
+            <div className="quiz-editor__questions-scroll" ref={questionsRef}>
+              {questions.map((question, index) => (
+                <article
+                  key={index}
+                  className={`quiz-editor__question-card ${
+                    focusedIndex === index ? "is-focused" : ""
+                  }`}
+                  onFocus={() => setFocusedIndex(index)}
+                >
+                  <div className="quiz-editor__question-head">
+                    <div className="quiz-editor__question-badge">Pregunta {index + 1}</div>
+                    <div className="quiz-editor__question-actions">
+                      <button
+                        type="button"
+                        className="btn-icon"
+                        title="Subir en el orden"
+                        disabled={index === 0}
+                        onClick={() => moveQuestion(index, -1)}
+                      >
+                        <IconArrowUp size={16} />
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-icon"
+                        title="Bajar en el orden"
+                        disabled={index === questions.length - 1}
+                        onClick={() => moveQuestion(index, 1)}
+                      >
+                        <IconArrowDown size={16} />
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-icon btn-icon--danger"
+                        title="Eliminar pregunta"
+                        onClick={() => removeQuestion(index)}
+                      >
+                        <IconTrash size={16} />
+                      </button>
+                    </div>
                   </div>
-                </div>
 
-                <label>
-                  Enunciado
-                  <textarea
-                    value={question.question_text}
-                    onChange={(e) => updateQuestion(index, "question_text", e.target.value)}
-                    rows={2}
-                    placeholder="Escribe la pregunta"
-                    required
-                  />
-                </label>
-
-                <label>
-                  URL de imagen (opcional)
-                  <input
-                    value={question.question_image_url}
-                    onChange={(e) => updateQuestion(index, "question_image_url", e.target.value)}
-                    placeholder="https://..."
-                  />
-                </label>
-
-                <div className="quiz-editor__options">
-                  {OPTION_LABELS.map(({ key, label }) => (
-                    <label key={key}>
-                      Opción {label}
-                      <input
-                        value={question[`option_${key}`]}
-                        onChange={(e) => updateQuestion(index, `option_${key}`, e.target.value)}
-                        placeholder={`Texto opción ${label}`}
-                        required
-                      />
-                    </label>
-                  ))}
-                </div>
-
-                <div className="quiz-editor__answer-row">
                   <label>
-                    Respuesta correcta
-                    <select
-                      value={question.correct_option}
-                      onChange={(e) => updateQuestion(index, "correct_option", e.target.value)}
-                    >
-                      {OPTION_LABELS.map(({ key, label }) => (
-                        <option key={key} value={key}>
-                          Opción {label}
-                        </option>
-                      ))}
-                    </select>
+                    <span>Enunciado</span>
+                    <textarea
+                      value={question.question_text}
+                      onChange={(e) => updateQuestion(index, "question_text", e.target.value)}
+                      rows={2}
+                      placeholder="Escribe la pregunta"
+                      required
+                    />
                   </label>
-                </div>
 
-                <label>
-                  Explicación (se muestra al revelar la respuesta)
-                  <textarea
-                    value={question.explanation_text}
-                    onChange={(e) => updateQuestion(index, "explanation_text", e.target.value)}
-                    rows={2}
-                    placeholder="Por qué esta es la respuesta correcta"
-                  />
-                </label>
-              </article>
-            ))}
+                  <label>
+                    <span>URL de imagen (opcional)</span>
+                    <input
+                      value={question.question_image_url}
+                      onChange={(e) => updateQuestion(index, "question_image_url", e.target.value)}
+                      placeholder="https://..."
+                    />
+                  </label>
+
+                  <div className="quiz-editor__options">
+                    {OPTION_LABELS.map(({ key, label, color }) => (
+                      <label key={key} className="quiz-editor__option-field">
+                        <span className={`quiz-editor__option-tag ${color}`}>{label}</span>
+                        <input
+                          value={question[`option_${key}`]}
+                          onChange={(e) => updateQuestion(index, `option_${key}`, e.target.value)}
+                          placeholder={`Texto opción ${label}`}
+                          required
+                        />
+                      </label>
+                    ))}
+                  </div>
+
+                  <div className="quiz-editor__answer-row">
+                    <label>
+                      <span>Respuesta correcta</span>
+                      <select
+                        value={question.correct_option}
+                        onChange={(e) => updateQuestion(index, "correct_option", e.target.value)}
+                      >
+                        {OPTION_LABELS.map(({ key, label }) => (
+                          <option key={key} value={key}>
+                            Opción {label}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  </div>
+
+                  <label>
+                    <span>Explicación (se muestra al revelar)</span>
+                    <textarea
+                      value={question.explanation_text}
+                      onChange={(e) => updateQuestion(index, "explanation_text", e.target.value)}
+                      rows={2}
+                      placeholder="Por qué esta es la respuesta correcta"
+                    />
+                  </label>
+                </article>
+              ))}
+            </div>
           </div>
 
           <div className="quiz-editor__footer">

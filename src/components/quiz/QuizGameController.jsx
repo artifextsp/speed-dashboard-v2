@@ -3,6 +3,7 @@ import {
   IconArrowRight,
   IconCheck,
   IconPlayerPlay,
+  IconUsers,
   IconX,
 } from "@tabler/icons-react";
 import { useQuizzes } from "../../hooks/useQuizzes";
@@ -39,14 +40,9 @@ export function QuizGameController({
 
   const refresh = useCallback(async () => {
     const state = await loadGameState(initialGame.id);
+    const results = await loadGameResults(initialGame.id);
     setGameState(state);
-    if (state.game.status === "finished") {
-      const results = await loadGameResults(initialGame.id);
-      setRanking(results);
-    } else {
-      const results = await loadGameResults(initialGame.id);
-      setRanking(results);
-    }
+    setRanking(results);
   }, [initialGame.id, loadGameState, loadGameResults]);
 
   useEffect(() => {
@@ -61,8 +57,19 @@ export function QuizGameController({
   const questions = gameState?.questions || initialGame.questions || [];
   const currentQuestion = gameState?.currentQuestion;
   const currentResponses = gameState?.currentResponses || [];
+  const presence = gameState?.presence || [];
   const totalStudents = activeStudents.length;
   const isLastQuestion = game.current_question_idx >= questions.length - 1;
+
+  const joinedIds = useMemo(
+    () => new Set(presence.map((p) => p.student_id)),
+    [presence]
+  );
+
+  const pendingStudents = useMemo(
+    () => activeStudents.filter((s) => !joinedIds.has(s.id)),
+    [activeStudents, joinedIds]
+  );
 
   const statusLabel = useMemo(() => {
     if (game.status === "waiting") return "Esperando inicio";
@@ -136,20 +143,18 @@ export function QuizGameController({
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal modal--wide quiz-game" onClick={(e) => e.stopPropagation()}>
-        <div className="modal__header">
+        <div className="quiz-game__banner">
           <div>
-            <h2>Control en vivo — {game.quizzes?.title || initialGame.quiz_title}</h2>
-            <p className="modal__subtitle">
+            <span className="quiz-game__eyebrow">Sesión en vivo</span>
+            <h2>{game.quizzes?.title || initialGame.quiz_title}</h2>
+            <p className="quiz-game__status">
               Estado: <strong>{statusLabel}</strong>
               {game.status === "active" && currentQuestion && (
-                <>
-                  {" "}
-                  · Pregunta {game.current_question_idx + 1} de {questions.length}
-                </>
+                <> · Pregunta {game.current_question_idx + 1} de {questions.length}</>
               )}
             </p>
           </div>
-          <button type="button" className="btn-icon" onClick={onClose} aria-label="Cerrar">
+          <button type="button" className="btn-icon btn-icon--on-dark" onClick={onClose} aria-label="Cerrar">
             <IconX size={18} />
           </button>
         </div>
@@ -158,7 +163,11 @@ export function QuizGameController({
           <section className="quiz-game__main">
             {game.status === "waiting" && (
               <div className="quiz-game__waiting">
-                <p>El juego está listo. Cuando los estudiantes estén conectados, inicia la primera pregunta.</p>
+                <IconUsers size={28} />
+                <p>
+                  {presence.length} de {totalStudents} estudiantes conectados.
+                  Cuando estén listos, inicia la primera pregunta.
+                </p>
                 {!readOnly && (
                   <button type="button" className="btn btn--primary" disabled={busy} onClick={handleStart}>
                     <IconPlayerPlay size={16} /> Iniciar juego
@@ -202,7 +211,7 @@ export function QuizGameController({
                 </div>
 
                 <div className="quiz-game__stats">
-                  Respuestas recibidas: <strong>{currentResponses.length}</strong> / {totalStudents}
+                  Respuestas recibidas: <strong>{currentResponses.length}</strong> / {presence.length} conectados
                 </div>
 
                 {!readOnly && (
@@ -227,7 +236,7 @@ export function QuizGameController({
 
             {game.status === "finished" && (
               <div className="quiz-game__finished">
-                <p>El juego ha terminado. Revisa el ranking a la derecha.</p>
+                <p>El juego ha terminado. Los estudiantes ya pueden ver el ranking y su resumen.</p>
                 <button type="button" className="btn btn--secondary" onClick={onFinished}>
                   Volver a cuestionarios
                 </button>
@@ -236,35 +245,105 @@ export function QuizGameController({
           </section>
 
           <aside className="quiz-game__sidebar">
-            <h3>Ranking (solo docente)</h3>
-            {ranking.length === 0 ? (
-              <p className="quiz-empty">Aún no hay puntajes.</p>
-            ) : (
-              <table className="attendance-table attendance-table--compact">
-                <thead>
-                  <tr>
-                    <th>#</th>
-                    <th>Estudiante</th>
-                    <th>Código</th>
-                    <th>Puntos</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {ranking.map((row, index) => (
-                    <tr key={row.student_id}>
-                      <td>{index + 1}</td>
-                      <td>{row.student_name}</td>
-                      <td>
-                        <span className="attendance-code">{row.student_code}</span>
-                      </td>
-                      <td>
-                        <strong>{row.total_score}</strong>
-                      </td>
-                    </tr>
+            <section className="quiz-game__panel">
+              <h3>Conectados ({presence.length}/{totalStudents})</h3>
+              {presence.length === 0 ? (
+                <p className="quiz-empty">Nadie ha ingresado aún.</p>
+              ) : (
+                <ul className="quiz-game__student-list">
+                  {presence.map((row) => (
+                    <li key={row.id}>
+                      <span className="attendance-code">{row.students?.student_code}</span>
+                      <span>{row.students?.full_name}</span>
+                    </li>
                   ))}
-                </tbody>
-              </table>
+                </ul>
+              )}
+            </section>
+
+            {pendingStudents.length > 0 && (
+              <section className="quiz-game__panel quiz-game__panel--warning">
+                <h3>Pendientes ({pendingStudents.length})</h3>
+                <ul className="quiz-game__student-list">
+                  {pendingStudents.map((student) => (
+                    <li key={student.id}>
+                      <span className="attendance-code">{student.student_code}</span>
+                      <span>{student.full_name}</span>
+                    </li>
+                  ))}
+                </ul>
+              </section>
             )}
+
+            {game.status === "active" && (
+              <section className="quiz-game__panel">
+                <h3>Respuestas de esta pregunta</h3>
+                {currentResponses.length === 0 ? (
+                  <p className="quiz-empty">Aún no hay respuestas.</p>
+                ) : (
+                  <table className="attendance-table attendance-table--compact">
+                    <thead>
+                      <tr>
+                        <th>#</th>
+                        <th>Estudiante</th>
+                        <th>Resultado</th>
+                        <th>Puntos</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {currentResponses.map((row, index) => {
+                        const total = ranking.find((r) => r.student_id === row.student_id)?.total_score ?? 0;
+                        return (
+                          <tr key={row.id}>
+                            <td>{index + 1}</td>
+                            <td>
+                              <div className="quiz-game__student-cell">
+                                <span className="attendance-code">{row.students?.student_code}</span>
+                                <span>{row.students?.full_name}</span>
+                              </div>
+                            </td>
+                            <td>
+                              <span className={`quiz-result-pill ${row.is_correct ? "is-ok" : "is-bad"}`}>
+                                {row.is_correct ? "Correcta" : "Incorrecta"}
+                              </span>
+                            </td>
+                            <td><strong>{total}</strong></td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                )}
+              </section>
+            )}
+
+            <section className="quiz-game__panel">
+              <h3>Ranking acumulado</h3>
+              {ranking.length === 0 ? (
+                <p className="quiz-empty">Aún no hay puntajes.</p>
+              ) : (
+                <table className="attendance-table attendance-table--compact">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Estudiante</th>
+                      <th>Código</th>
+                      <th>Puntos</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {ranking.map((row, index) => (
+                      <tr key={row.student_id}>
+                        <td>{index + 1}</td>
+                        <td>{row.student_name}</td>
+                        <td><span className="attendance-code">{row.student_code}</span></td>
+                        <td><strong>{row.total_score}</strong></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </section>
           </aside>
         </div>
       </div>

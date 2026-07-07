@@ -4,6 +4,9 @@ import asistenciaHtml from "../../public/site-template/asistencia.html?raw";
 import asistenciaJs from "../../public/site-template/asistencia.js?raw";
 import quizHtml from "../../public/site-template/quiz.html?raw";
 import quizJs from "../../public/site-template/quiz.js?raw";
+import quizCss from "../../public/site-template/quiz.css?raw";
+import quizPuntosHtml from "../../public/site-template/quiz-puntos.html?raw";
+import quizPuntosJs from "../../public/site-template/quiz-puntos.js?raw";
 import { getPhaseColor, MODALITY_LABELS } from "./constants";
 import { resolveClassComponents } from "../kernel/legacyMigration";
 import { withDisplayNumbers } from "../kernel/componentManager";
@@ -111,6 +114,10 @@ function renderSiteHeader() {
     <a class="site-quiz-cta" href="quiz.html">
       ${QUIZ_ICON_SVG}
       Participa en el cuestionario en vivo con tu código
+    </a>
+    <a class="site-quiz-scores-cta" href="quiz-puntos.html">
+      ${QUIZ_ICON_SVG}
+      Consulta tus puntajes de cuestionarios
     </a>
   </header>`;
 }
@@ -349,6 +356,9 @@ export async function generateSiteFiles(phases, sessions, options = {}) {
     "asistencia.js": asistenciaJs,
     "quiz.html": quizHtml,
     "quiz.js": quizJs,
+    "quiz.css": quizCss,
+    "quiz-puntos.html": quizPuntosHtml,
+    "quiz-puntos.js": quizPuntosJs,
     "index.html": renderIndexPage(phases, allSessions),
     ...assetFiles,
   };

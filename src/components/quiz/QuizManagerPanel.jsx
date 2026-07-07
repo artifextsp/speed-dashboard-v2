@@ -144,17 +144,18 @@ export function QuizManagerPanel({ user, readOnly, onClose, onNotify }) {
     <>
       <div className="modal-overlay" onClick={onClose}>
         <div className="modal modal--wide quiz-manager" onClick={(e) => e.stopPropagation()}>
-          <div className="modal__header">
-            <div>
-              <h2>Cuestionarios</h2>
-              <p className="modal__subtitle">
-                Crea cuestionarios reutilizables y lánzalos en vivo. Los estudiantes responden
-                desde proyectospeed.com/quiz.html con su código de 4 dígitos.
-              </p>
-            </div>
-            <button type="button" className="btn-icon" onClick={onClose} aria-label="Cerrar">
-              <IconX size={18} />
-            </button>
+          <div className="quiz-editor__banner quiz-manager__banner">
+          <div>
+            <span className="quiz-editor__eyebrow">Evaluación en vivo</span>
+            <h2>Cuestionarios</h2>
+            <p className="quiz-editor__intro">
+              Crea cuestionarios reutilizables y lánzalos en vivo. Los estudiantes responden desde
+              proyectospeed.com/quiz.html con su código de 4 dígitos.
+            </p>
+          </div>
+          <button type="button" className="btn-icon btn-icon--on-dark" onClick={onClose} aria-label="Cerrar">
+            <IconX size={18} />
+          </button>
           </div>
 
           {!readOnly && (
