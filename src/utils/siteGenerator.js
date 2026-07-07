@@ -2,6 +2,8 @@ import siteCss from "../../public/site-template/site.css?raw";
 import siteJs from "../../public/site-template/site.js?raw";
 import asistenciaHtml from "../../public/site-template/asistencia.html?raw";
 import asistenciaJs from "../../public/site-template/asistencia.js?raw";
+import quizHtml from "../../public/site-template/quiz.html?raw";
+import quizJs from "../../public/site-template/quiz.js?raw";
 import { getPhaseColor, MODALITY_LABELS } from "./constants";
 import { resolveClassComponents } from "../kernel/legacyMigration";
 import { withDisplayNumbers } from "../kernel/componentManager";
@@ -87,6 +89,7 @@ function renderConventionsCard(allSessions) {
 }
 
 const ATTENDANCE_ICON_SVG = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5h6a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>`;
+const QUIZ_ICON_SVG = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.09 9a3 3 0 1 1 5.82 1c0 2-3 3-3 3"/><path d="M12 17h.01"/><circle cx="12" cy="12" r="10"/></svg>`;
 
 function renderSiteHeader() {
   return `<header class="site-header">
@@ -104,6 +107,10 @@ function renderSiteHeader() {
     <a class="site-attendance-cta" href="asistencia.html">
       ${ATTENDANCE_ICON_SVG}
       Consulta tu asistencia con tu código de 4 dígitos
+    </a>
+    <a class="site-quiz-cta" href="quiz.html">
+      ${QUIZ_ICON_SVG}
+      Participa en el cuestionario en vivo con tu código
     </a>
   </header>`;
 }
@@ -340,6 +347,8 @@ export async function generateSiteFiles(phases, sessions, options = {}) {
     "site.js": siteJs,
     "asistencia.html": asistenciaHtml,
     "asistencia.js": asistenciaJs,
+    "quiz.html": quizHtml,
+    "quiz.js": quizJs,
     "index.html": renderIndexPage(phases, allSessions),
     ...assetFiles,
   };

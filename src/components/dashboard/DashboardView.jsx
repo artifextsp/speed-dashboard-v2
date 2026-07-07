@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { IconLogout, IconEye, IconKey, IconPlus, IconUsers, IconChartBar } from "@tabler/icons-react";
+import { IconLogout, IconEye, IconKey, IconPlus, IconUsers, IconChartBar, IconBrain } from "@tabler/icons-react";
 import { PHASE_COLORS, UNASSIGNED_BLOCK_FILTER } from "../../utils/constants";
 import { getClassPermissions } from "../../kernel/permissions";
 import { sortSessionsByDate } from "../../kernel/sortByDate";
@@ -18,6 +18,7 @@ import { InstitutionLogos } from "../ui/InstitutionLogos";
 import { StudentsAdminPanel } from "../attendance/StudentsAdminPanel";
 import { AttendanceStatsPanel } from "../attendance/AttendanceStatsPanel";
 import { SessionAttendanceModal } from "../attendance/SessionAttendanceModal";
+import { QuizManagerPanel } from "../quiz/QuizManagerPanel";
 
 export function DashboardView({
   phases,
@@ -44,6 +45,7 @@ export function DashboardView({
   const [phaseModal, setPhaseModal] = useState(null);
   const [showStudentsAdmin, setShowStudentsAdmin] = useState(false);
   const [showAttendanceStats, setShowAttendanceStats] = useState(false);
+  const [showQuizManager, setShowQuizManager] = useState(false);
   const [attendanceSession, setAttendanceSession] = useState(null);
   const isSupervisor = user?.role === "supervisor";
   const isAdmin = user?.role === "admin";
@@ -182,7 +184,7 @@ export function DashboardView({
 
       <StatsBar sessions={sortedSessions} />
 
-      {(permissions.canManageStudents || permissions.canViewAttendance) && (
+      {(permissions.canManageStudents || permissions.canViewAttendance || permissions.canViewQuiz) && (
         <div className="dashboard__attendance-bar">
           {permissions.canManageStudents && (
             <button
@@ -200,6 +202,15 @@ export function DashboardView({
               onClick={() => setShowAttendanceStats(true)}
             >
               <IconChartBar size={16} /> Estadísticas de asistencia
+            </button>
+          )}
+          {permissions.canViewQuiz && (
+            <button
+              type="button"
+              className="btn btn--secondary"
+              onClick={() => setShowQuizManager(true)}
+            >
+              <IconBrain size={16} /> Cuestionarios
             </button>
           )}
         </div>
@@ -345,6 +356,15 @@ export function DashboardView({
           user={user}
           readOnly={!permissions.canRecordAttendance}
           onClose={() => setAttendanceSession(null)}
+          onNotify={onPublishResult}
+        />
+      )}
+
+      {showQuizManager && (
+        <QuizManagerPanel
+          user={user}
+          readOnly={!permissions.canManageQuiz}
+          onClose={() => setShowQuizManager(false)}
           onNotify={onPublishResult}
         />
       )}
