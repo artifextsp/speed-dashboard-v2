@@ -24,7 +24,7 @@ export function SessionAttendanceModal({
     loadRecordsForRollCall,
     createRollCall,
     syncRollCallRecords,
-    updateRecordStatus,
+    updateRecordsStatusBulk,
     deleteRollCall,
     updateRollCallLabel,
   } = useAttendance(user);
@@ -166,15 +166,19 @@ export function SessionAttendanceModal({
     }
     setSaving(true);
     try {
-      await Promise.all(
-        changed.map((r) =>
-          updateRecordStatus({
-            recordId: r.id,
-            status: pendingStatuses[r.id],
-            updatedBy: user?.email,
-          })
+      const rows = changed.map((r) => ({
+        id: r.id,
+        roll_call_id: r.roll_call_id,
+        student_id: r.student_id,
+        status: pendingStatuses[r.id],
+      }));
+      const timeout = new Promise((_, reject) =>
+        setTimeout(
+          () => reject(new Error("La operación tardó demasiado. Verifica tu conexión e intenta de nuevo.")),
+          20000
         )
       );
+      await Promise.race([updateRecordsStatusBulk(rows, user?.email), timeout]);
       const now = new Date().toISOString();
       setRecords((prev) =>
         prev.map((r) =>

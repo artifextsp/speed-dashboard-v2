@@ -125,6 +125,28 @@ export function useAttendance(user) {
     if (err) throw new Error(err.message);
   };
 
+  /**
+   * Guarda varios cambios de estado en una sola petición (upsert por id) en
+   * vez de una petición por estudiante. Evita cuelgues cuando hay muchos
+   * cambios a la vez y es más rápido.
+   */
+  const updateRecordsStatusBulk = async (rows, updatedBy) => {
+    if (!rows?.length) return;
+    const now = new Date().toISOString();
+    const payload = rows.map((r) => ({
+      id: r.id,
+      roll_call_id: r.roll_call_id,
+      student_id: r.student_id,
+      status: r.status,
+      updated_by: updatedBy || null,
+      updated_at: now,
+    }));
+    const { error: err } = await supabase
+      .from("attendance_records")
+      .upsert(payload, { onConflict: "id" });
+    if (err) throw new Error(err.message);
+  };
+
   const deleteRollCall = async (rollCallId) => {
     const { error: err } = await supabase
       .from("attendance_roll_calls")
@@ -174,6 +196,7 @@ export function useAttendance(user) {
     createRollCall,
     syncRollCallRecords,
     updateRecordStatus,
+    updateRecordsStatusBulk,
     deleteRollCall,
     updateRollCallLabel,
     fetchStatsSummary,
