@@ -164,6 +164,20 @@ export function SessionAttendanceModal({
       onNotify?.("No hay cambios para registrar");
       return;
     }
+
+    const previousRecords = records;
+    const now = new Date().toISOString();
+
+    // Actualización optimista: se ve instantáneo, sin esperar la red.
+    setRecords((prev) =>
+      prev.map((r) =>
+        pendingStatuses[r.id] && pendingStatuses[r.id] !== r.status
+          ? { ...r, status: pendingStatuses[r.id], updated_at: now }
+          : r
+      )
+    );
+    onNotify?.(`Asistencia registrada: ${changed.length} estudiante(s) actualizados`);
+
     setSaving(true);
     try {
       const rows = changed.map((r) => ({
@@ -179,17 +193,10 @@ export function SessionAttendanceModal({
         )
       );
       await Promise.race([updateRecordsStatusBulk(rows, user?.email), timeout]);
-      const now = new Date().toISOString();
-      setRecords((prev) =>
-        prev.map((r) =>
-          pendingStatuses[r.id] && pendingStatuses[r.id] !== r.status
-            ? { ...r, status: pendingStatuses[r.id], updated_at: now }
-            : r
-        )
-      );
-      onNotify?.(`Asistencia registrada: ${changed.length} estudiante(s) actualizados`);
     } catch (err) {
-      onNotify?.(err.message || "Error al registrar asistencia", true);
+      // Revierte la actualización optimista si el guardado real falló.
+      setRecords(previousRecords);
+      onNotify?.(err.message || "Error al registrar asistencia, se deshicieron los cambios", true);
     } finally {
       setSaving(false);
     }
@@ -404,14 +411,19 @@ export function SessionAttendanceModal({
                           type="button"
                           className="btn btn--primary"
                           onClick={handleSaveAttendance}
-                          disabled={saving || !hasChanges}
+                          disabled={!hasChanges}
                         >
                           <IconCheck size={16} />
-                          {saving ? "Guardando…" : "Registrar asistencia"}
+                          Registrar asistencia
                         </button>
-                        {hasChanges && !saving && (
+                        {hasChanges && (
                           <span className="attendance-modal__save-hint">
                             Hay cambios sin guardar
+                          </span>
+                        )}
+                        {saving && (
+                          <span className="attendance-modal__save-hint attendance-modal__save-hint--sync">
+                            Sincronizando…
                           </span>
                         )}
                       </div>

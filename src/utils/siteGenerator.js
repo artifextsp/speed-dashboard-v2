@@ -86,6 +86,8 @@ function renderConventionsCard(allSessions) {
   </section>`;
 }
 
+const ATTENDANCE_ICON_SVG = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5h6a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>`;
+
 function renderSiteHeader() {
   return `<header class="site-header">
     <div class="site-header__bar">
@@ -99,6 +101,10 @@ function renderSiteHeader() {
         <img src="${SITE_LOGO_PATHS.stem}" alt="Olimpiadas STEM" class="site-header__logo site-header__logo--stem" />
       </div>
     </div>
+    <a class="site-attendance-cta" href="asistencia.html">
+      ${ATTENDANCE_ICON_SVG}
+      Consulta tu asistencia con tu código de 4 dígitos
+    </a>
   </header>`;
 }
 
@@ -307,7 +313,6 @@ function renderIndexPage(phases, allSessions) {
     <div class="pv-container">
       ${renderSiteHeader()}
       ${renderConventionsCard(allSessions)}
-      <p class="site-attendance-link"><a href="asistencia.html">Ver llamado a lista (códigos públicos)</a></p>
       ${phaseSections}
       <div class="pv-footer">Proyecto SPEED · Uniminuto 2026</div>
     </div>
