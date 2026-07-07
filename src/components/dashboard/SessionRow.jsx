@@ -8,6 +8,7 @@ import {
   IconSettings,
   IconTrash,
   IconDownload,
+  IconClipboardList,
 } from "@tabler/icons-react";
 import {
   MODALITY_LABELS,
@@ -45,6 +46,7 @@ export function SessionRow({
   onEditMeta,
   onDelete,
   onDownloadPdf,
+  onAttendance,
   readOnly,
   canDownloadPdf = false,
 }) {
@@ -128,47 +130,21 @@ export function SessionRow({
         <StatusBadge status={session.status} />
       </button>
 
-      {!readOnly && (
-        <div className="session-row__actions">
-          {canDownloadPdf && (
-            <button
-              type="button"
-              className="btn-icon session-row__action"
-              title="Descargar PDF"
-              onClick={(e) => {
-                e.stopPropagation();
-                onDownloadPdf?.(session);
-              }}
-            >
-              <IconDownload size={16} />
-            </button>
-          )}
+      <div className="session-row__actions">
+        {onAttendance && (
           <button
             type="button"
             className="btn-icon session-row__action"
-            title="Editar bloque, fecha y datos"
+            title={readOnly ? "Ver llamado a lista" : "Llamado a lista"}
             onClick={(e) => {
               e.stopPropagation();
-              onEditMeta?.(session);
+              onAttendance?.(session);
             }}
           >
-            <IconSettings size={16} />
+            <IconClipboardList size={16} />
           </button>
-          <button
-            type="button"
-            className="btn-icon session-row__action session-row__action--danger"
-            title="Eliminar clase"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete?.(session);
-            }}
-          >
-            <IconTrash size={16} />
-          </button>
-        </div>
-      )}
-      {readOnly && canDownloadPdf && (
-        <div className="session-row__actions">
+        )}
+        {canDownloadPdf && (
           <button
             type="button"
             className="btn-icon session-row__action"
@@ -180,8 +156,34 @@ export function SessionRow({
           >
             <IconDownload size={16} />
           </button>
-        </div>
-      )}
+        )}
+        {!readOnly && (
+          <>
+            <button
+              type="button"
+              className="btn-icon session-row__action"
+              title="Editar bloque, fecha y datos"
+              onClick={(e) => {
+                e.stopPropagation();
+                onEditMeta?.(session);
+              }}
+            >
+              <IconSettings size={16} />
+            </button>
+            <button
+              type="button"
+              className="btn-icon session-row__action session-row__action--danger"
+              title="Eliminar clase"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete?.(session);
+              }}
+            >
+              <IconTrash size={16} />
+            </button>
+          </>
+        )}
+      </div>
     </div>
   );
 }

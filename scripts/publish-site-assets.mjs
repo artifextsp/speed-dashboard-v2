@@ -28,6 +28,8 @@ async function main() {
   const files = {
     "site.js": readText("public/site-template/site.js"),
     "site.css": readText("public/site-template/site.css"),
+    "asistencia.html": readText("public/site-template/asistencia.html"),
+    "asistencia.js": readText("public/site-template/asistencia.js"),
   };
 
   console.log(`Publicando site.js y site.css en ${owner}/${repo} (${SITE_BUILD_VERSION})…`);

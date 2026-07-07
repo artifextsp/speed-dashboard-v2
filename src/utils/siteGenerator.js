@@ -1,5 +1,7 @@
 import siteCss from "../../public/site-template/site.css?raw";
 import siteJs from "../../public/site-template/site.js?raw";
+import asistenciaHtml from "../../public/site-template/asistencia.html?raw";
+import asistenciaJs from "../../public/site-template/asistencia.js?raw";
 import { getPhaseColor, MODALITY_LABELS } from "./constants";
 import { resolveClassComponents } from "../kernel/legacyMigration";
 import { withDisplayNumbers } from "../kernel/componentManager";
@@ -305,6 +307,7 @@ function renderIndexPage(phases, allSessions) {
     <div class="pv-container">
       ${renderSiteHeader()}
       ${renderConventionsCard(allSessions)}
+      <p class="site-attendance-link"><a href="asistencia.html">Ver llamado a lista (códigos públicos)</a></p>
       ${phaseSections}
       <div class="pv-footer">Proyecto SPEED · Uniminuto 2026</div>
     </div>
@@ -330,6 +333,8 @@ export async function generateSiteFiles(phases, sessions, options = {}) {
   const files = {
     "site.css": siteCss,
     "site.js": siteJs,
+    "asistencia.html": asistenciaHtml,
+    "asistencia.js": asistenciaJs,
     "index.html": renderIndexPage(phases, allSessions),
     ...assetFiles,
   };

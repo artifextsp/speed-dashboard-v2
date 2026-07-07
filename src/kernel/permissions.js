@@ -12,8 +12,14 @@ const PERMISSIONS = {
     "class.publish",
     "class.downloadPdf",
     "class.view",
+    "attendance.view",
+    "attendance.record",
   ]),
-  supervisor: new Set(["class.view", "class.downloadPdf"]),
+  supervisor: new Set([
+    "class.view",
+    "class.downloadPdf",
+    "attendance.view",
+  ]),
   student: new Set(["class.view", "class.downloadPdf"]),
 };
 
@@ -37,6 +43,9 @@ export function getClassPermissions(speedRole) {
     canPublish: can(kernelRole, "class.publish"),
     canView: can(kernelRole, "class.view"),
     canDownloadPdf: can(kernelRole, "class.downloadPdf"),
+    canViewAttendance: can(kernelRole, "attendance.view"),
+    canRecordAttendance: can(kernelRole, "attendance.record"),
+    canManageStudents: speedRole === "admin",
     readOnly: kernelRole === "supervisor",
   };
 }

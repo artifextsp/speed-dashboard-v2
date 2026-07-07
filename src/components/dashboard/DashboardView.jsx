@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { IconLogout, IconEye, IconKey, IconPlus } from "@tabler/icons-react";
+import { IconLogout, IconEye, IconKey, IconPlus, IconUsers, IconChartBar } from "@tabler/icons-react";
 import { PHASE_COLORS, UNASSIGNED_BLOCK_FILTER } from "../../utils/constants";
 import { getClassPermissions } from "../../kernel/permissions";
 import { sortSessionsByDate } from "../../kernel/sortByDate";
@@ -15,6 +15,9 @@ import { StatsBar } from "./StatsBar";
 import { ChangePasswordModal } from "../ui/ChangePasswordModal";
 import { PublishButton } from "../publish/PublishButton";
 import { InstitutionLogos } from "../ui/InstitutionLogos";
+import { StudentsAdminPanel } from "../attendance/StudentsAdminPanel";
+import { AttendanceStatsPanel } from "../attendance/AttendanceStatsPanel";
+import { SessionAttendanceModal } from "../attendance/SessionAttendanceModal";
 
 export function DashboardView({
   phases,
@@ -39,6 +42,9 @@ export function DashboardView({
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [metaModal, setMetaModal] = useState(null);
   const [phaseModal, setPhaseModal] = useState(null);
+  const [showStudentsAdmin, setShowStudentsAdmin] = useState(false);
+  const [showAttendanceStats, setShowAttendanceStats] = useState(false);
+  const [attendanceSession, setAttendanceSession] = useState(null);
   const isSupervisor = user?.role === "supervisor";
   const isAdmin = user?.role === "admin";
   const permissions = getClassPermissions(user?.role);
@@ -176,6 +182,29 @@ export function DashboardView({
 
       <StatsBar sessions={sortedSessions} />
 
+      {(permissions.canManageStudents || permissions.canViewAttendance) && (
+        <div className="dashboard__attendance-bar">
+          {permissions.canManageStudents && (
+            <button
+              type="button"
+              className="btn btn--secondary"
+              onClick={() => setShowStudentsAdmin(true)}
+            >
+              <IconUsers size={16} /> Estudiantes del piloto
+            </button>
+          )}
+          {permissions.canViewAttendance && (
+            <button
+              type="button"
+              className="btn btn--secondary"
+              onClick={() => setShowAttendanceStats(true)}
+            >
+              <IconChartBar size={16} /> Estadísticas de asistencia
+            </button>
+          )}
+        </div>
+      )}
+
       {isAdmin && (
         <PublishButton
           phases={phases}
@@ -260,6 +289,11 @@ export function DashboardView({
             }
             onDelete={handleDelete}
             onDownloadPdf={onDownloadPdf}
+            onAttendance={
+              permissions.canViewAttendance
+                ? (session) => setAttendanceSession(session)
+                : undefined
+            }
             canDownloadPdf={permissions.canDownloadPdf}
             readOnly={permissions.readOnly}
           />
@@ -286,6 +320,32 @@ export function DashboardView({
           onClose={() => setPhaseModal(null)}
           onSave={handlePhaseSave}
           onDelete={handlePhaseDelete}
+        />
+      )}
+
+      {showStudentsAdmin && (
+        <StudentsAdminPanel
+          user={user}
+          onClose={() => setShowStudentsAdmin(false)}
+          onNotify={onPublishResult}
+        />
+      )}
+
+      {showAttendanceStats && (
+        <AttendanceStatsPanel
+          user={user}
+          sessions={sortedSessions}
+          onClose={() => setShowAttendanceStats(false)}
+        />
+      )}
+
+      {attendanceSession && (
+        <SessionAttendanceModal
+          session={attendanceSession}
+          user={user}
+          readOnly={!permissions.canRecordAttendance}
+          onClose={() => setAttendanceSession(null)}
+          onNotify={onPublishResult}
         />
       )}
     </div>

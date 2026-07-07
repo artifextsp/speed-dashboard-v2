@@ -2851,3 +2851,318 @@ button.markdown-image-card__frame {
 
   .pv-card__number { width: 28px; height: 28px; font-size: 12px; }
 }
+
+/* ══════════════════════════════════════════
+   ATTENDANCE MODULE
+   ══════════════════════════════════════════ */
+
+.dashboard__attendance-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0 0 16px;
+}
+
+.modal--wide {
+  width: min(1100px, 96vw);
+  max-height: 90vh;
+  overflow: auto;
+}
+
+.modal__subtitle {
+  margin: 6px 0 0;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+}
+
+.modal__hint {
+  margin: 8px 0 0;
+  color: var(--color-text-tertiary);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.attendance-empty {
+  color: var(--color-text-secondary);
+  padding: 16px 0;
+}
+
+.attendance-code {
+  display: inline-block;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+}
+
+.attendance-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.attendance-table th,
+.attendance-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--color-border-tertiary);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.attendance-table th {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-secondary);
+}
+
+.attendance-table tr.is-inactive td {
+  opacity: 0.55;
+}
+
+.attendance-admin__form {
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--color-border-tertiary);
+}
+
+.attendance-admin__section-title {
+  margin: 0 0 12px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.attendance-admin__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.attendance-admin__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.attendance-admin__search,
+.attendance-admin__filter {
+  padding: 8px 10px;
+  border: 1px solid var(--color-border-tertiary);
+  border-radius: var(--radius-sm);
+  font: inherit;
+  background: #fff;
+}
+
+.attendance-admin__search {
+  min-width: 240px;
+}
+
+.attendance-inline-input {
+  width: 100%;
+  min-width: 120px;
+  padding: 6px 8px;
+  border: 1px solid var(--color-border-tertiary);
+  border-radius: var(--radius-sm);
+  font: inherit;
+}
+
+.attendance-row-actions {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.attendance-admin__form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.attendance-admin__form-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.attendance-admin__form-grid input {
+  padding: 10px 12px;
+  border: 1px solid var(--color-border-tertiary);
+  border-radius: var(--radius-sm);
+  font: inherit;
+}
+
+.attendance-modal__layout {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 16px;
+  min-height: 420px;
+}
+
+.attendance-modal__sidebar {
+  border: 1px solid var(--color-border-tertiary);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  background: var(--color-background-secondary);
+}
+
+.attendance-modal__sidebar-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.attendance-modal__label-input,
+.attendance-modal__label-edit input,
+.attendance-status-select {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--color-border-tertiary);
+  border-radius: var(--radius-sm);
+  font: inherit;
+  background: #fff;
+}
+
+.attendance-roll-list {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.attendance-roll-list__item {
+  width: 100%;
+  text-align: left;
+  border: 1px solid var(--color-border-tertiary);
+  border-radius: var(--radius-sm);
+  background: #fff;
+  padding: 10px;
+  cursor: pointer;
+}
+
+.attendance-roll-list__item.is-active {
+  border-color: #534ab7;
+  box-shadow: 0 0 0 1px #534ab7;
+}
+
+.attendance-roll-list__item span {
+  display: block;
+  font-weight: 600;
+}
+
+.attendance-roll-list__item small {
+  color: var(--color-text-secondary);
+}
+
+.attendance-modal__main {
+  border: 1px solid var(--color-border-tertiary);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  overflow: auto;
+}
+
+.attendance-modal__meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.attendance-modal__label-edit {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.attendance-stats-inline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.att-stat {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #f3f4f6;
+}
+
+.att-stat--present { color: #1d9e75; background: #eaf7f1; }
+.att-stat--absent { color: #dc2626; background: #fee2e2; }
+.att-stat--excused { color: #d97706; background: #fef3c7; }
+
+.attendance-pill {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.attendance-stats__summary {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.attendance-kpi {
+  border: 1px solid var(--color-border-tertiary);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  background: var(--color-background-secondary);
+}
+
+.attendance-kpi__value {
+  display: block;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.attendance-kpi__label {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.att-kpi--present .attendance-kpi__value { color: #1d9e75; }
+.att-kpi--absent .attendance-kpi__value { color: #dc2626; }
+.att-kpi--excused .attendance-kpi__value { color: #d97706; }
+
+.attendance-stats__section-title {
+  margin: 24px 0 10px;
+  font-size: 16px;
+}
+
+.site-attendance-link {
+  margin: 0 0 20px;
+  text-align: center;
+}
+
+.site-attendance-link a {
+  color: #534ab7;
+  font-weight: 600;
+}
+
+@media (max-width: 900px) {
+  .attendance-admin__form-grid,
+  .attendance-modal__layout,
+  .attendance-stats__summary {
+    grid-template-columns: 1fr;
+  }
+}
