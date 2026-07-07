@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
 
 export function useStudents(user) {
@@ -74,9 +74,14 @@ export function useStudents(user) {
     await load();
   };
 
+  const activeStudents = useMemo(
+    () => students.filter((s) => s.active),
+    [students]
+  );
+
   return {
     students,
-    activeStudents: students.filter((s) => s.active),
+    activeStudents,
     loading,
     error,
     reload: load,

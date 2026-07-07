@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { IconClipboardList, IconPlus, IconX } from "@tabler/icons-react";
+import { IconCheck, IconClipboardList, IconPlus, IconX } from "@tabler/icons-react";
 import { useAttendance } from "../../hooks/useAttendance";
 import { useStudents } from "../../hooks/useStudents";
 import {
@@ -23,6 +23,7 @@ export function SessionAttendanceModal({
     loadRollCallsForSession,
     loadRecordsForRollCall,
     createRollCall,
+    syncRollCallRecords,
     updateRecordStatus,
     updateRollCallLabel,
   } = useAttendance(user);
@@ -32,6 +33,8 @@ export function SessionAttendanceModal({
   const [recordsLoading, setRecordsLoading] = useState(false);
   const [newLabel, setNewLabel] = useState("");
   const [creating, setCreating] = useState(false);
+  const [pendingStatuses, setPendingStatuses] = useState({});
+  const [saving, setSaving] = useState(false);
 
   const sessionTitle = session.session_number
     ? `Sesión ${session.session_number}: ${session.title}`
@@ -41,25 +44,38 @@ export function SessionAttendanceModal({
     loadRollCallsForSession(session.id);
   }, [session.id, loadRollCallsForSession]);
 
-  const refreshRecords = useCallback(async (rollCallId) => {
-    if (!rollCallId) {
-      setRecords([]);
-      return;
-    }
-    setRecordsLoading(true);
-    try {
-      const rows = await loadRecordsForRollCall(rollCallId);
-      setRecords(rows);
-    } catch (err) {
-      onNotify?.(err.message || "Error al cargar asistencia", true);
-    } finally {
-      setRecordsLoading(false);
-    }
-  }, [loadRecordsForRollCall, onNotify]);
+  const refreshRecords = useCallback(
+    async (rollCallId) => {
+      if (!rollCallId) {
+        setRecords([]);
+        return;
+      }
+      setRecordsLoading(true);
+      try {
+        try {
+          await syncRollCallRecords({
+            rollCallId,
+            studentIds: activeStudents.map((s) => s.id),
+            recordedBy: user?.email,
+          });
+        } catch {
+          // La sincronización es best-effort; si falla, igual mostramos lo que exista.
+        }
+        const rows = await loadRecordsForRollCall(rollCallId);
+        setRecords(rows);
+      } catch (err) {
+        onNotify?.(err.message || "Error al cargar asistencia", true);
+      } finally {
+        setRecordsLoading(false);
+      }
+    },
+    [loadRecordsForRollCall, syncRollCallRecords, activeStudents, user?.email, onNotify]
+  );
 
   useEffect(() => {
     if (selectedRollCallId) refreshRecords(selectedRollCallId);
-  }, [selectedRollCallId, refreshRecords]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedRollCallId]);
 
   useEffect(() => {
     if (!selectedRollCallId && rollCalls.length > 0) {
@@ -72,7 +88,21 @@ export function SessionAttendanceModal({
     [rollCalls, selectedRollCallId]
   );
 
-  const stats = useMemo(() => computeAttendanceStats(records), [records]);
+  useEffect(() => {
+    const map = {};
+    for (const r of records) map[r.id] = r.status;
+    setPendingStatuses(map);
+  }, [records]);
+
+  const stats = useMemo(
+    () =>
+      computeAttendanceStats(
+        records.map((r) => ({ status: pendingStatuses[r.id] || r.status }))
+      ),
+    [records, pendingStatuses]
+  );
+
+  const hasChanges = records.some((r) => pendingStatuses[r.id] !== r.status);
 
   const handleCreateRollCall = async () => {
     if (activeStudents.length === 0) {
@@ -98,17 +128,44 @@ export function SessionAttendanceModal({
     }
   };
 
-  const handleStatusChange = async (recordId, status) => {
+  const handleSelectStatus = (recordId, status) => {
     if (readOnly) return;
+    setPendingStatuses((prev) => ({ ...prev, [recordId]: status }));
+  };
+
+  const handleSaveAttendance = async () => {
+    if (readOnly) return;
+    const changed = records.filter(
+      (r) => pendingStatuses[r.id] && pendingStatuses[r.id] !== r.status
+    );
+    if (changed.length === 0) {
+      onNotify?.("No hay cambios para registrar");
+      return;
+    }
+    setSaving(true);
     try {
-      await updateRecordStatus({
-        recordId,
-        status,
-        updatedBy: user?.email,
-      });
-      await refreshRecords(selectedRollCallId);
+      await Promise.all(
+        changed.map((r) =>
+          updateRecordStatus({
+            recordId: r.id,
+            status: pendingStatuses[r.id],
+            updatedBy: user?.email,
+          })
+        )
+      );
+      const now = new Date().toISOString();
+      setRecords((prev) =>
+        prev.map((r) =>
+          pendingStatuses[r.id] && pendingStatuses[r.id] !== r.status
+            ? { ...r, status: pendingStatuses[r.id], updated_at: now }
+            : r
+        )
+      );
+      onNotify?.(`Asistencia registrada: ${changed.length} estudiante(s) actualizados`);
     } catch (err) {
-      onNotify?.(err.message || "Error al actualizar asistencia", true);
+      onNotify?.(err.message || "Error al registrar asistencia", true);
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -226,58 +283,100 @@ export function SessionAttendanceModal({
                 {recordsLoading ? (
                   <p className="attendance-empty">Cargando registros…</p>
                 ) : (
-                  <table className="attendance-table">
-                    <thead>
-                      <tr>
-                        <th>Código</th>
-                        <th>Estudiante</th>
-                        <th>Identificación</th>
-                        <th>Estado</th>
-                        <th>Última modificación</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {records.map((row) => {
-                        const cfg = getAttendanceStatusConfig(row.status);
-                        return (
-                          <tr key={row.id}>
-                            <td>
-                              <span className="attendance-code">{row.students?.student_code}</span>
-                            </td>
-                            <td>{row.students?.full_name}</td>
-                            <td>{row.students?.id_number}</td>
-                            <td>
-                              {readOnly ? (
-                                <span
-                                  className="attendance-pill"
-                                  style={{
-                                    color: cfg.color,
-                                    background: cfg.bg,
-                                    borderColor: cfg.border,
-                                  }}
-                                >
-                                  {cfg.label}
-                                </span>
-                              ) : (
-                                <select
-                                  className="attendance-status-select"
-                                  value={row.status}
-                                  onChange={(e) => handleStatusChange(row.id, e.target.value)}
-                                >
-                                  {ATTENDANCE_STATUSES.map((status) => (
-                                    <option key={status} value={status}>
-                                      {getAttendanceStatusConfig(status).label}
-                                    </option>
-                                  ))}
-                                </select>
-                              )}
-                            </td>
-                            <td>{formatAttendanceDateTime(row.updated_at)}</td>
+                  <>
+                    <div className="attendance-table-scroll">
+                      <table className="attendance-table attendance-table--sticky">
+                        <thead>
+                          <tr>
+                            <th>Código</th>
+                            <th>Estudiante</th>
+                            <th>Identificación</th>
+                            <th>Asistencia</th>
                           </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
+                        </thead>
+                        <tbody>
+                          {records.map((row) => {
+                            const currentStatus = pendingStatuses[row.id] || row.status;
+                            return (
+                              <tr key={row.id}>
+                                <td>
+                                  <span className="attendance-code">{row.students?.student_code}</span>
+                                </td>
+                                <td>{row.students?.full_name}</td>
+                                <td>{row.students?.id_number}</td>
+                                <td>
+                                  {readOnly ? (
+                                    (() => {
+                                      const cfg = getAttendanceStatusConfig(currentStatus);
+                                      return (
+                                        <span
+                                          className="attendance-pill"
+                                          style={{
+                                            color: cfg.color,
+                                            background: cfg.bg,
+                                            borderColor: cfg.border,
+                                          }}
+                                        >
+                                          {cfg.label}
+                                        </span>
+                                      );
+                                    })()
+                                  ) : (
+                                    <div className="attendance-status-options">
+                                      {ATTENDANCE_STATUSES.map((status) => {
+                                        const cfg = getAttendanceStatusConfig(status);
+                                        const isActive = currentStatus === status;
+                                        return (
+                                          <button
+                                            key={status}
+                                            type="button"
+                                            className={`attendance-status-option${
+                                              isActive ? " is-active" : ""
+                                            }`}
+                                            style={
+                                              isActive
+                                                ? {
+                                                    color: cfg.color,
+                                                    background: cfg.bg,
+                                                    borderColor: cfg.border,
+                                                  }
+                                                : undefined
+                                            }
+                                            onClick={() => handleSelectStatus(row.id, status)}
+                                          >
+                                            {cfg.shortLabel} · {cfg.label}
+                                          </button>
+                                        );
+                                      })}
+                                    </div>
+                                  )}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {!readOnly && (
+                      <div className="attendance-modal__save-bar">
+                        <button
+                          type="button"
+                          className="btn btn--primary"
+                          onClick={handleSaveAttendance}
+                          disabled={saving || !hasChanges}
+                        >
+                          <IconCheck size={16} />
+                          {saving ? "Guardando…" : "Registrar asistencia"}
+                        </button>
+                        {hasChanges && !saving && (
+                          <span className="attendance-modal__save-hint">
+                            Hay cambios sin guardar
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </>
                 )}
               </>
             )}

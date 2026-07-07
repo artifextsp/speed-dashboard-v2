@@ -84,6 +84,35 @@ export function useAttendance(user) {
     return rollCall;
   };
 
+  /**
+   * Agrega registros "ausente" para estudiantes activos que aún no
+   * tienen fila en este llamado (p. ej. registrados después de crearlo).
+   */
+  const syncRollCallRecords = useCallback(async ({ rollCallId, studentIds, recordedBy }) => {
+    if (!rollCallId || !studentIds?.length) return false;
+    const { data: existing, error: err } = await supabase
+      .from("attendance_records")
+      .select("student_id")
+      .eq("roll_call_id", rollCallId);
+    if (err) throw new Error(err.message);
+
+    const existingIds = new Set((existing || []).map((r) => r.student_id));
+    const missing = studentIds.filter((id) => !existingIds.has(id));
+    if (missing.length === 0) return false;
+
+    const now = new Date().toISOString();
+    const newRecords = missing.map((studentId) => ({
+      roll_call_id: rollCallId,
+      student_id: studentId,
+      status: "ausente",
+      updated_by: recordedBy || null,
+      updated_at: now,
+    }));
+    const { error: insErr } = await supabase.from("attendance_records").insert(newRecords);
+    if (insErr) throw new Error(insErr.message);
+    return true;
+  }, []);
+
   const updateRecordStatus = async ({ recordId, status, updatedBy }) => {
     const { error: err } = await supabase
       .from("attendance_records")
@@ -135,6 +164,7 @@ export function useAttendance(user) {
     loadAllRollCalls,
     loadRecordsForRollCall,
     createRollCall,
+    syncRollCallRecords,
     updateRecordStatus,
     updateRollCallLabel,
     fetchStatsSummary,
