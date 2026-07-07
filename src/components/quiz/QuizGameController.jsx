@@ -71,6 +71,59 @@ export function QuizGameController({
     [activeStudents, joinedIds]
   );
 
+  const scoreByStudentId = useMemo(() => {
+    const map = new Map();
+    for (const row of ranking) {
+      map.set(row.student_id, row.total_score ?? 0);
+    }
+    return map;
+  }, [ranking]);
+
+  const connectedScoreboard = useMemo(() => {
+    const responseByStudent = new Map(
+      currentResponses.map((row) => [row.student_id, row])
+    );
+    const answered = currentResponses.map((row, index) => ({
+      student_id: row.student_id,
+      student_code: row.students?.student_code || "—",
+      student_name: row.students?.full_name || "—",
+      total_score: scoreByStudentId.get(row.student_id) ?? 0,
+      order: index + 1,
+      current_status: row.is_correct ? "correct" : "incorrect",
+      current_label: row.is_correct ? "Correcta" : "Incorrecta",
+      responded: true,
+    }));
+
+    const waiting = presence
+      .filter((row) => !responseByStudent.has(row.student_id))
+      .map((row) => ({
+        student_id: row.student_id,
+        student_code: row.students?.student_code || "—",
+        student_name: row.students?.full_name || "—",
+        total_score: scoreByStudentId.get(row.student_id) ?? 0,
+        order: null,
+        current_status: "waiting",
+        current_label: game.status === "active" ? "Sin responder" : "—",
+        responded: false,
+      }))
+      .sort((a, b) => {
+        if (b.total_score !== a.total_score) return b.total_score - a.total_score;
+        return String(a.student_code).localeCompare(String(b.student_code), "es");
+      });
+
+    return [...answered, ...waiting];
+  }, [presence, currentResponses, scoreByStudentId, game.status, game.question_phase]);
+
+  const liveRanking = useMemo(() => {
+    if (ranking.length > 0) return ranking;
+    return presence.map((row) => ({
+      student_id: row.student_id,
+      student_name: row.students?.full_name || "—",
+      student_code: row.students?.student_code || "—",
+      total_score: 0,
+    }));
+  }, [ranking, presence]);
+
   const statusLabel = useMemo(() => {
     if (game.status === "waiting") return "Esperando inicio";
     if (game.status === "finished") return "Finalizado";
@@ -245,24 +298,68 @@ export function QuizGameController({
           </section>
 
           <aside className="quiz-game__sidebar">
-            <section className="quiz-game__panel">
-              <h3>Conectados ({presence.length}/{totalStudents})</h3>
-              {presence.length === 0 ? (
+            {(game.status === "active" || game.status === "waiting") && presence.length > 0 && (
+              <section className="quiz-game__panel quiz-game__panel--scoreboard">
+                <h3>
+                  {game.status === "active"
+                    ? `Marcador en vivo (${presence.length} conectados)`
+                    : `Conectados (${presence.length}/${totalStudents})`}
+                </h3>
+                <table className="attendance-table attendance-table--compact">
+                  <thead>
+                    <tr>
+                      {game.status === "active" && <th>#</th>}
+                      <th>Estudiante</th>
+                      <th>Puntos</th>
+                      {game.status === "active" && <th>Esta pregunta</th>}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(game.status === "active" ? connectedScoreboard : liveRanking).map(
+                      (row, index) => (
+                        <tr key={row.student_id}>
+                          {game.status === "active" && (
+                            <td>{row.order ?? "—"}</td>
+                          )}
+                          <td>
+                            <div className="quiz-game__student-cell">
+                              <span className="attendance-code">{row.student_code}</span>
+                              <span>{row.student_name}</span>
+                            </div>
+                          </td>
+                          <td>
+                            <span className="quiz-game__score-badge">{row.total_score}</span>
+                          </td>
+                          {game.status === "active" && (
+                            <td>
+                              {row.current_status === "correct" && (
+                                <span className="quiz-result-pill is-ok">{row.current_label}</span>
+                              )}
+                              {row.current_status === "incorrect" && (
+                                <span className="quiz-result-pill is-bad">{row.current_label}</span>
+                              )}
+                              {row.current_status === "waiting" && (
+                                <span className="quiz-result-pill is-pending">{row.current_label}</span>
+                              )}
+                            </td>
+                          )}
+                        </tr>
+                      )
+                    )}
+                  </tbody>
+                </table>
+              </section>
+            )}
+
+            {game.status === "waiting" && presence.length === 0 && (
+              <section className="quiz-game__panel">
+                <h3>Conectados (0/{totalStudents})</h3>
                 <p className="quiz-empty">Nadie ha ingresado aún.</p>
-              ) : (
-                <ul className="quiz-game__student-list">
-                  {presence.map((row) => (
-                    <li key={row.id}>
-                      <span className="attendance-code">{row.students?.student_code}</span>
-                      <span>{row.students?.full_name}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
+              </section>
+            )}
 
             {pendingStudents.length > 0 && (
-              <section className="quiz-game__panel quiz-game__panel--warning">
+              <section className="quiz-game__panel quiz-game__panel--warning quiz-game__panel--pending">
                 <h3>Pendientes ({pendingStudents.length})</h3>
                 <ul className="quiz-game__student-list">
                   {pendingStudents.map((student) => (
@@ -275,75 +372,35 @@ export function QuizGameController({
               </section>
             )}
 
-            {game.status === "active" && (
-              <section className="quiz-game__panel">
-                <h3>Respuestas de esta pregunta</h3>
-                {currentResponses.length === 0 ? (
-                  <p className="quiz-empty">Aún no hay respuestas.</p>
+            {game.status === "finished" && (
+              <section className="quiz-game__panel quiz-game__panel--scoreboard">
+                <h3>Ranking final</h3>
+                {liveRanking.length === 0 ? (
+                  <p className="quiz-empty">No hay puntajes registrados.</p>
                 ) : (
                   <table className="attendance-table attendance-table--compact">
                     <thead>
                       <tr>
                         <th>#</th>
                         <th>Estudiante</th>
-                        <th>Resultado</th>
+                        <th>Código</th>
                         <th>Puntos</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {currentResponses.map((row, index) => {
-                        const total = ranking.find((r) => r.student_id === row.student_id)?.total_score ?? 0;
-                        return (
-                          <tr key={row.id}>
-                            <td>{index + 1}</td>
-                            <td>
-                              <div className="quiz-game__student-cell">
-                                <span className="attendance-code">{row.students?.student_code}</span>
-                                <span>{row.students?.full_name}</span>
-                              </div>
-                            </td>
-                            <td>
-                              <span className={`quiz-result-pill ${row.is_correct ? "is-ok" : "is-bad"}`}>
-                                {row.is_correct ? "Correcta" : "Incorrecta"}
-                              </span>
-                            </td>
-                            <td><strong>{total}</strong></td>
-                          </tr>
-                        );
-                      })}
+                      {liveRanking.map((row, index) => (
+                        <tr key={row.student_id}>
+                          <td>{index + 1}</td>
+                          <td>{row.student_name}</td>
+                          <td><span className="attendance-code">{row.student_code}</span></td>
+                          <td><span className="quiz-game__score-badge">{row.total_score}</span></td>
+                        </tr>
+                      ))}
                     </tbody>
                   </table>
                 )}
               </section>
             )}
-
-            <section className="quiz-game__panel">
-              <h3>Ranking acumulado</h3>
-              {ranking.length === 0 ? (
-                <p className="quiz-empty">Aún no hay puntajes.</p>
-              ) : (
-                <table className="attendance-table attendance-table--compact">
-                  <thead>
-                    <tr>
-                      <th>#</th>
-                      <th>Estudiante</th>
-                      <th>Código</th>
-                      <th>Puntos</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {ranking.map((row, index) => (
-                      <tr key={row.student_id}>
-                        <td>{index + 1}</td>
-                        <td>{row.student_name}</td>
-                        <td><span className="attendance-code">{row.student_code}</span></td>
-                        <td><strong>{row.total_score}</strong></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </section>
           </aside>
         </div>
       </div>
