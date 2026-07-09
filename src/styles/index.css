@@ -2878,6 +2878,11 @@ button.markdown-image-card__frame {
   overflow: auto;
 }
 
+.modal.modal--wide.quiz-editor {
+  overflow: hidden;
+  max-height: 92vh;
+}
+
 .modal__subtitle {
   margin: 6px 0 0;
   color: var(--color-text-secondary);
@@ -3339,8 +3344,23 @@ button.markdown-image-card__frame {
   flex-direction: column;
   flex: 1;
   min-height: 0;
+  overflow: hidden;
   padding: 20px 28px 0;
-  gap: 20px;
+  gap: 0;
+}
+
+.quiz-editor__form > .quiz-editor__section:first-of-type {
+  flex-shrink: 0;
+  margin-bottom: 20px;
+}
+
+.quiz-editor__form > .quiz-editor__section:nth-of-type(2) {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow: hidden;
 }
 
 .quiz-editor__section {
@@ -3418,9 +3438,12 @@ button.markdown-image-card__frame {
 .quiz-editor__questions-scroll {
   display: grid;
   gap: 16px;
-  max-height: min(48vh, 520px);
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
-  padding: 4px 6px 4px 2px;
+  overscroll-behavior: contain;
+  scroll-padding-bottom: 24px;
+  padding: 4px 6px 24px 2px;
 }
 
 .quiz-editor__question-card {
@@ -3562,8 +3585,6 @@ button.markdown-image-card__frame {
   padding: 16px 28px 20px;
   border-top: 1px solid var(--color-border-tertiary);
   background: #fff;
-  position: sticky;
-  bottom: 0;
   z-index: 2;
 }
 
