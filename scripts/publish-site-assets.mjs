@@ -6,9 +6,13 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { publishToGitHub } from "../src/utils/githubPublisher.js";
+import {
+  assertSiteAssetsBundle,
+  SITE_ASSETS_VERSION,
+  stampSiteJs,
+} from "../src/utils/siteAssetsGuard.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const SITE_BUILD_VERSION = "2026-07-03-image-fix-v1";
 
 function readText(relativePath) {
   return readFileSync(path.join(root, relativePath), "utf8");
@@ -25,14 +29,20 @@ async function main() {
     process.exit(1);
   }
 
+  const siteJs = readText("public/site-template/site.js");
+  const siteCss = readText("public/site-template/site.css");
+  assertSiteAssetsBundle(siteJs, siteCss);
+
   const files = {
-    "site.js": readText("public/site-template/site.js"),
-    "site.css": readText("public/site-template/site.css"),
+    "site.js": stampSiteJs(siteJs),
+    "site.css": siteCss,
     "asistencia.html": readText("public/site-template/asistencia.html"),
     "asistencia.js": readText("public/site-template/asistencia.js"),
   };
 
-  console.log(`Publicando site.js y site.css en ${owner}/${repo} (${SITE_BUILD_VERSION})…`);
+  console.log(
+    `Publicando site.js y site.css en ${owner}/${repo} (assets ${SITE_ASSETS_VERSION})…`
+  );
   const result = await publishToGitHub(files, { token, owner, repo, branch });
   console.log("Listo.");
   console.log(`Commit: ${result.commitUrl}`);

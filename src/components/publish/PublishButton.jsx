@@ -3,6 +3,7 @@ import { IconAlertTriangle, IconWorldUpload } from "@tabler/icons-react";
 import {
   generateSiteFiles,
   getAccessibleSessions,
+  SITE_ASSETS_VERSION,
   SITE_BUILD_VERSION,
 } from "../../utils/siteGenerator";
 import { fetchSessionVideosMap } from "../../utils/fetchSessionVideosMap";
@@ -12,10 +13,12 @@ import {
   validateGitHubConfig,
 } from "../../utils/githubPublisher";
 import {
+  fetchLiveSiteAssetsVersion,
   fetchLiveSiteBuildVersion,
   fetchLiveSitePublishedAt,
   getPublicSiteUrl,
   hasUnpublishedSessionChanges,
+  isSiteAssetsOutdated,
   isSiteOutdated,
 } from "../../utils/liveSiteStatus";
 
@@ -32,23 +35,27 @@ function formatPublishedAt(iso) {
 export function PublishButton({ phases, sessions, fetchFreshSessions, onResult }) {
   const [publishing, setPublishing] = useState(false);
   const [liveVersion, setLiveVersion] = useState(null);
+  const [liveAssetsVersion, setLiveAssetsVersion] = useState(null);
   const [livePublishedAt, setLivePublishedAt] = useState(null);
   const [liveCheckError, setLiveCheckError] = useState(null);
   const accessible = getAccessibleSessions(sessions);
   const config = getGitHubConfig();
   const configOk = validateGitHubConfig(config).ok;
   const siteOutdated = isSiteOutdated(liveVersion, SITE_BUILD_VERSION);
+  const siteAssetsOutdated = isSiteAssetsOutdated(liveAssetsVersion, SITE_ASSETS_VERSION);
   const hasPendingEdits = hasUnpublishedSessionChanges(sessions, livePublishedAt);
   const publicSiteUrl = getPublicSiteUrl();
 
   const refreshLiveVersion = async () => {
     try {
       setLiveCheckError(null);
-      const [version, publishedAt] = await Promise.all([
+      const [version, assetsVersion, publishedAt] = await Promise.all([
         fetchLiveSiteBuildVersion(),
+        fetchLiveSiteAssetsVersion(),
         fetchLiveSitePublishedAt(),
       ]);
       setLiveVersion(version);
+      setLiveAssetsVersion(assetsVersion);
       setLivePublishedAt(publishedAt);
     } catch (err) {
       setLiveCheckError(err.message || "No se pudo verificar el sitio");
@@ -88,7 +95,8 @@ export function PublishButton({ phases, sessions, fetchFreshSessions, onResult }
         `Debes publicar para que los estudiantes vean el contenido nuevo.\n\n` +
         `Se enviará el temario (${freshSessions.length} clases) a ${config.owner}/${config.repo}.\n` +
         `• ${freshAccessible.length} clase(s) accesibles + PDF\n` +
-        `• Build del generador: ${SITE_BUILD_VERSION}\n\n` +
+        `• Build del generador: ${SITE_BUILD_VERSION}\n` +
+        `• Assets del sitio (zoom, estilos): ${SITE_ASSETS_VERSION}\n\n` +
         `¿Publicar ahora?`
     );
     if (!confirmed) return;
@@ -156,6 +164,14 @@ export function PublishButton({ phases, sessions, fetchFreshSessions, onResult }
             {livePublishedAt ? (
               <> · Publicado: {formatPublishedAt(livePublishedAt)}</>
             ) : null}
+            {liveAssetsVersion ? (
+              <>
+                {" "}
+                · Assets live: <strong>{liveAssetsVersion}</strong>
+              </>
+            ) : liveCheckError ? null : (
+              <> · Assets live: sin zoom</>
+            )}
           </span>
         </div>
       </div>
@@ -182,20 +198,33 @@ export function PublishButton({ phases, sessions, fetchFreshSessions, onResult }
         </div>
       )}
 
-      {siteOutdated && !hasPendingEdits && !publishing && (
+      {(siteOutdated || siteAssetsOutdated) && !hasPendingEdits && !publishing && (
         <div className="publish-bar__alert" role="status">
           <IconAlertTriangle size={18} />
           <div>
-            <strong>El sitio de estudiantes usa una versión antigua del generador.</strong>
+            <strong>El sitio de estudiantes no tiene la versión actual del sistema.</strong>
             <p>
-              El build publicado es <strong>{liveVersion || "antiguo"}</strong> y el generador actual es{" "}
-              <strong>{SITE_BUILD_VERSION}</strong>. Publica de nuevo para aplicar mejoras del sistema.
+              {siteOutdated ? (
+                <>
+                  Build del generador: publicado <strong>{liveVersion || "antiguo"}</strong>, actual{" "}
+                  <strong>{SITE_BUILD_VERSION}</strong>.
+                </>
+              ) : null}
+              {siteOutdated && siteAssetsOutdated ? " " : null}
+              {siteAssetsOutdated ? (
+                <>
+                  Assets (zoom en imágenes, estilos): publicado{" "}
+                  <strong>{liveAssetsVersion || "sin zoom"}</strong>, actual{" "}
+                  <strong>{SITE_ASSETS_VERSION}</strong>.
+                </>
+              ) : null}
+              {" "}Publica de nuevo para que los estudiantes vean las mejoras.
             </p>
           </div>
         </div>
       )}
 
-      {!siteOutdated && !hasPendingEdits && liveVersion && !publishing && (
+      {!siteOutdated && !siteAssetsOutdated && !hasPendingEdits && liveVersion && !publishing && (
         <p className="publish-bar__ok">
           Sitio de estudiantes sincronizado con las clases guardadas.
         </p>
