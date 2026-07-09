@@ -11,6 +11,18 @@ function normalizeContentForPdf(markdown) {
   let s = markdown;
 
   s = s.replace(
+    /<div class="markdown-styled-block"[^>]*>([\s\S]*?)<\/div>/gi,
+    (_, inner) => `\n\n${inner}\n\n`
+  );
+
+  s = s.replace(
+    /<span[^>]*>##\s*([\s\S]*?)<\/span>/gi,
+    (_, inner) => `\n\n## ${inner.replace(/<[^>]+>/g, "").trim()}\n\n`
+  );
+
+  s = s.replace(/⸻/g, "\n\n---\n\n");
+
+  s = s.replace(
     /<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi,
     (_, href, inner) => {
       const label = inner.replace(/<[^>]+>/g, "").trim() || href;
@@ -172,12 +184,21 @@ function parseInline(tokens) {
 
 function parseHtml(html) {
   const blocks = [];
+  const seenKeys = new Set();
+
+  const pushUnique = (block) => {
+    const key = JSON.stringify(block);
+    if (seenKeys.has(key)) return;
+    seenKeys.add(key);
+    blocks.push(block);
+  };
+
   const iframeRe = /<iframe[^>]+src=["']([^"']+)["'][^>]*>/gi;
   let match;
   while ((match = iframeRe.exec(html)) !== null) {
     const ytId = extractYouTubeId(match[1]);
     if (ytId) {
-      blocks.push({
+      pushUnique({
         type: "video",
         text: "▶ Ver video en YouTube",
         url: youtubeWatchUrl(ytId),
@@ -187,7 +208,7 @@ function parseHtml(html) {
 
   const imgRe = /<img[^>]+src=["']([^"']+)["'][^>]*(?:alt=["']([^"']*)["'])?[^>]*>/gi;
   while ((match = imgRe.exec(html)) !== null) {
-    blocks.push({
+    pushUnique({
       type: "image",
       src: resolveImageUrl(match[1]),
       alt: match[2]?.trim() || "Imagen",
@@ -201,9 +222,9 @@ function parseHtml(html) {
     const text = friendlyLinkLabel(rawText, href);
     const ytId = extractYouTubeId(href);
     if (ytId) {
-      blocks.push({ type: "video", text, url: youtubeWatchUrl(ytId) });
+      pushUnique({ type: "video", text, url: youtubeWatchUrl(ytId) });
     } else {
-      blocks.push({
+      pushUnique({
         type: "paragraph",
         parts: [{ type: "link", text, href }],
       });
@@ -216,9 +237,9 @@ function parseHtml(html) {
     const text = friendlyLinkLabel(match[1].trim(), href);
     const ytId = extractYouTubeId(href);
     if (ytId) {
-      blocks.push({ type: "video", text, url: youtubeWatchUrl(ytId) });
+      pushUnique({ type: "video", text, url: youtubeWatchUrl(ytId) });
     } else {
-      blocks.push({
+      pushUnique({
         type: "paragraph",
         parts: [{ type: "link", text, href }],
       });
@@ -227,7 +248,7 @@ function parseHtml(html) {
 
   const plain = html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
   if (blocks.length === 0 && plain) {
-    blocks.push({
+    pushUnique({
       type: "paragraph",
       parts: [{ type: "text", text: plain }],
     });

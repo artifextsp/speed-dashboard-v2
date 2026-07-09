@@ -40,7 +40,9 @@ const styles = StyleSheet.create({
     borderBottomColor: "#ececf0",
   },
   instHeaderText: {
-    flex: 1,
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: 0,
     paddingRight: 16,
     flexDirection: "column",
   },
@@ -64,17 +66,18 @@ const styles = StyleSheet.create({
   instHeaderLogos: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
   },
   logoUniminuto: {
     width: 82,
     height: 58,
     objectFit: "contain",
+    marginRight: 12,
   },
   logoBogota: {
     width: 110,
     height: 36,
     objectFit: "contain",
+    marginRight: 12,
   },
   logoStem: {
     width: 72,
@@ -111,7 +114,6 @@ const styles = StyleSheet.create({
   metaRow: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 8,
     marginBottom: 12,
   },
   metaPill: {
@@ -121,6 +123,8 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     fontWeight: 700,
+    marginRight: 8,
+    marginBottom: 8,
   },
   metaText: {
     fontSize: 9,
@@ -155,7 +159,6 @@ const styles = StyleSheet.create({
   sectionHead: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
     marginBottom: 12,
     paddingBottom: 8,
     borderBottomWidth: 1,
@@ -170,9 +173,12 @@ const styles = StyleSheet.create({
     fontWeight: 700,
     textAlign: "center",
     paddingTop: 6,
+    marginRight: 12,
   },
   sectionTitle: {
-    flex: 1,
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: 0,
     fontSize: 12,
     fontWeight: 700,
     color: "#111",
@@ -234,7 +240,9 @@ const styles = StyleSheet.create({
     fontWeight: 700,
   },
   listContent: {
-    flex: 1,
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: 0,
   },
   link: {
     color: "#185FA5",
@@ -343,7 +351,7 @@ function PdfInlineParts({ parts, linkStyle, videoStyle }) {
           part.code ? styles.codeInline : null,
         ].filter(Boolean);
         return (
-          <Text key={key} style={inlineStyle}>
+          <Text key={key} style={inlineStyle.length ? inlineStyle : undefined}>
             {part.text}
           </Text>
         );
@@ -544,7 +552,7 @@ export function SessionPdfDocument({ session, phase, videos = [] }) {
         )}
 
         {resources.length > 0 && (
-          <View style={styles.resourcesBox} wrap={false}>
+          <View style={styles.resourcesBox}>
             <Text style={styles.resourcesTitle}>Recursos multimedia y enlaces</Text>
             {resources.map((r, i) => (
               <View
