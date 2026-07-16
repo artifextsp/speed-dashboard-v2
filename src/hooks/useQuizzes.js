@@ -43,32 +43,59 @@ export function useQuizzes(user) {
     return data || [];
   }, []);
 
-  const createQuiz = async ({ title, description, questions, createdBy }) => {
+  const normalizeTimeLimit = (value) => {
+    if (value === "" || value == null) return null;
+    const n = Number(value);
+    if (!Number.isFinite(n)) return null;
+    return Math.min(600, Math.max(5, Math.round(n)));
+  };
+
+  const normalizeAdvanceDelay = (value) => {
+    const n = Number(value);
+    if (!Number.isFinite(n)) return 5;
+    return Math.min(60, Math.max(2, Math.round(n)));
+  };
+
+  const mapQuestionPayload = (quizId, questions) =>
+    questions.map((q, index) => ({
+      quiz_id: quizId,
+      sort_order: index,
+      question_text: q.question_text.trim(),
+      question_image_url: q.question_image_url?.trim() || null,
+      option_a: q.option_a.trim(),
+      option_b: q.option_b.trim(),
+      option_c: q.option_c.trim(),
+      option_d: q.option_d.trim(),
+      correct_option: q.correct_option,
+      explanation_text: q.explanation_text?.trim() || null,
+      time_limit_seconds: normalizeTimeLimit(q.time_limit_seconds),
+    }));
+
+  const createQuiz = async ({
+    title,
+    description,
+    questions,
+    createdBy,
+    auto_advance = false,
+    auto_advance_delay_seconds = 5,
+  }) => {
     const { data: quiz, error: quizErr } = await supabase
       .from("quizzes")
       .insert({
         title: title.trim(),
         description: description?.trim() || null,
         created_by: createdBy || null,
+        auto_advance: Boolean(auto_advance),
+        auto_advance_delay_seconds: normalizeAdvanceDelay(auto_advance_delay_seconds),
       })
       .select()
       .single();
     if (quizErr) throw new Error(quizErr.message);
 
     if (questions?.length) {
-      const payload = questions.map((q, index) => ({
-        quiz_id: quiz.id,
-        sort_order: index,
-        question_text: q.question_text.trim(),
-        question_image_url: q.question_image_url?.trim() || null,
-        option_a: q.option_a.trim(),
-        option_b: q.option_b.trim(),
-        option_c: q.option_c.trim(),
-        option_d: q.option_d.trim(),
-        correct_option: q.correct_option,
-        explanation_text: q.explanation_text?.trim() || null,
-      }));
-      const { error: qErr } = await supabase.from("quiz_questions").insert(payload);
+      const { error: qErr } = await supabase
+        .from("quiz_questions")
+        .insert(mapQuestionPayload(quiz.id, questions));
       if (qErr) throw new Error(qErr.message);
     }
 
@@ -76,12 +103,17 @@ export function useQuizzes(user) {
     return quiz;
   };
 
-  const updateQuiz = async (quizId, { title, description, questions }) => {
+  const updateQuiz = async (
+    quizId,
+    { title, description, questions, auto_advance = false, auto_advance_delay_seconds = 5 }
+  ) => {
     const { error: quizErr } = await supabase
       .from("quizzes")
       .update({
         title: title.trim(),
         description: description?.trim() || null,
+        auto_advance: Boolean(auto_advance),
+        auto_advance_delay_seconds: normalizeAdvanceDelay(auto_advance_delay_seconds),
         updated_at: new Date().toISOString(),
       })
       .eq("id", quizId);
@@ -94,19 +126,9 @@ export function useQuizzes(user) {
     if (delErr) throw new Error(delErr.message);
 
     if (questions?.length) {
-      const payload = questions.map((q, index) => ({
-        quiz_id: quizId,
-        sort_order: index,
-        question_text: q.question_text.trim(),
-        question_image_url: q.question_image_url?.trim() || null,
-        option_a: q.option_a.trim(),
-        option_b: q.option_b.trim(),
-        option_c: q.option_c.trim(),
-        option_d: q.option_d.trim(),
-        correct_option: q.correct_option,
-        explanation_text: q.explanation_text?.trim() || null,
-      }));
-      const { error: qErr } = await supabase.from("quiz_questions").insert(payload);
+      const { error: qErr } = await supabase
+        .from("quiz_questions")
+        .insert(mapQuestionPayload(quizId, questions));
       if (qErr) throw new Error(qErr.message);
     }
 
@@ -156,13 +178,16 @@ export function useQuizzes(user) {
   };
 
   const startGame = async (gameId) => {
+    const now = new Date().toISOString();
     const { data, error: err } = await supabase
       .from("quiz_game_sessions")
       .update({
         status: "active",
         current_question_idx: 0,
         question_phase: "answering",
-        started_at: new Date().toISOString(),
+        started_at: now,
+        question_started_at: now,
+        reveal_started_at: null,
       })
       .eq("id", gameId)
       .select()
@@ -174,7 +199,10 @@ export function useQuizzes(user) {
   const revealAnswer = async (gameId) => {
     const { data, error: err } = await supabase
       .from("quiz_game_sessions")
-      .update({ question_phase: "reveal" })
+      .update({
+        question_phase: "reveal",
+        reveal_started_at: new Date().toISOString(),
+      })
       .eq("id", gameId)
       .select()
       .single();
@@ -188,10 +216,20 @@ export function useQuizzes(user) {
       .update({
         current_question_idx: nextIdx,
         question_phase: "answering",
+        question_started_at: new Date().toISOString(),
+        reveal_started_at: null,
       })
       .eq("id", gameId)
       .select()
       .single();
+    if (err) throw new Error(err.message);
+    return data;
+  };
+
+  const tickGameTimers = async (gameId) => {
+    const { data, error: err } = await supabase.rpc("progress_quiz_timers", {
+      p_game_id: gameId,
+    });
     if (err) throw new Error(err.message);
     return data;
   };
@@ -211,9 +249,11 @@ export function useQuizzes(user) {
   };
 
   const loadGameState = useCallback(async (gameId) => {
+    await supabase.rpc("progress_quiz_timers", { p_game_id: gameId });
+
     const { data: game, error: gameErr } = await supabase
       .from("quiz_game_sessions")
-      .select("*, quizzes(id, title, description)")
+      .select("*, quizzes(id, title, description, auto_advance, auto_advance_delay_seconds)")
       .eq("id", gameId)
       .single();
     if (gameErr) throw new Error(gameErr.message);
@@ -317,6 +357,7 @@ export function useQuizzes(user) {
     revealAnswer,
     advanceQuestion,
     finishGame,
+    tickGameTimers,
     loadGameState,
     loadGameResults,
   };

@@ -3400,6 +3400,19 @@ button.markdown-image-card__frame {
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
 }
 
+.quiz-editor__timing-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+@media (max-width: 768px) {
+  .quiz-editor__timing-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .quiz-editor__meta-card .field {
   margin-bottom: 0;
 }
@@ -3834,6 +3847,25 @@ button.markdown-image-card__frame {
   border-radius: var(--radius-md);
   background: #f8fafc;
   border: 1px solid var(--color-border-tertiary);
+}
+
+.quiz-game__timer {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #312e81;
+  border: 1px solid #c7d2fe;
+  font-weight: 700;
+}
+
+.quiz-game__timer.is-urgent {
+  background: #fef2f2;
+  color: #991b1b;
+  border-color: #fecaca;
 }
 
 .attendance-table--compact th,

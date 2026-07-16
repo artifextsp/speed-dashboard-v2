@@ -52,17 +52,31 @@ export function QuizManagerPanel({ user, readOnly, onClose, onNotify }) {
     }
   };
 
-  const handleSave = async ({ title, description, questions }) => {
+  const handleSave = async ({
+    title,
+    description,
+    questions,
+    auto_advance,
+    auto_advance_delay_seconds,
+  }) => {
     if (editorQuiz?.mode === "create") {
       await createQuiz({
         title,
         description,
         questions,
+        auto_advance,
+        auto_advance_delay_seconds,
         createdBy: user?.email,
       });
       onNotify?.("Cuestionario creado");
     } else {
-      await updateQuiz(editorQuiz.quiz.id, { title, description, questions });
+      await updateQuiz(editorQuiz.quiz.id, {
+        title,
+        description,
+        questions,
+        auto_advance,
+        auto_advance_delay_seconds,
+      });
       onNotify?.("Cuestionario actualizado");
     }
   };

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   IconArrowRight,
   IconCheck,
+  IconClock,
   IconPlayerPlay,
   IconUsers,
   IconX,
@@ -15,6 +16,34 @@ const OPTION_META = [
   { key: "c", label: "C", className: "quiz-option--c" },
   { key: "d", label: "D", className: "quiz-option--d" },
 ];
+
+function computeSecondsLeft(game, currentQuestion) {
+  if (!game || game.status !== "active") return null;
+  const now = Date.now();
+
+  if (
+    game.question_phase === "answering" &&
+    currentQuestion?.time_limit_seconds &&
+    game.question_started_at
+  ) {
+    const ends =
+      new Date(game.question_started_at).getTime() +
+      currentQuestion.time_limit_seconds * 1000;
+    return Math.max(0, Math.ceil((ends - now) / 1000));
+  }
+
+  if (
+    game.question_phase === "reveal" &&
+    game.quizzes?.auto_advance &&
+    game.reveal_started_at
+  ) {
+    const delay = game.quizzes?.auto_advance_delay_seconds ?? 5;
+    const ends = new Date(game.reveal_started_at).getTime() + delay * 1000;
+    return Math.max(0, Math.ceil((ends - now) / 1000));
+  }
+
+  return null;
+}
 
 export function QuizGameController({
   user,
@@ -37,6 +66,7 @@ export function QuizGameController({
   const [gameState, setGameState] = useState(null);
   const [ranking, setRanking] = useState([]);
   const [busy, setBusy] = useState(false);
+  const [nowTick, setNowTick] = useState(Date.now());
 
   const refresh = useCallback(async () => {
     const state = await loadGameState(initialGame.id);
@@ -49,9 +79,14 @@ export function QuizGameController({
     refresh().catch((err) => onNotify?.(err.message, true));
     const interval = setInterval(() => {
       refresh().catch(() => {});
-    }, 3000);
+    }, 1500);
     return () => clearInterval(interval);
   }, [refresh, onNotify]);
+
+  useEffect(() => {
+    const tick = setInterval(() => setNowTick(Date.now()), 250);
+    return () => clearInterval(tick);
+  }, []);
 
   const game = gameState?.game || initialGame;
   const questions = gameState?.questions || initialGame.questions || [];
@@ -60,6 +95,12 @@ export function QuizGameController({
   const presence = gameState?.presence || [];
   const totalStudents = activeStudents.length;
   const isLastQuestion = game.current_question_idx >= questions.length - 1;
+  const secondsLeft = useMemo(
+    () => computeSecondsLeft(game, currentQuestion),
+    // nowTick fuerza el recálculo del countdown en pantalla
+    [game, currentQuestion, nowTick]
+  );
+  const autoAdvance = Boolean(game.quizzes?.auto_advance);
 
   const joinedIds = useMemo(
     () => new Set(presence.map((p) => p.student_id)),
@@ -112,7 +153,7 @@ export function QuizGameController({
       });
 
     return [...answered, ...waiting];
-  }, [presence, currentResponses, scoreByStudentId, game.status, game.question_phase]);
+  }, [presence, currentResponses, scoreByStudentId, game.status]);
 
   const liveRanking = useMemo(() => {
     if (ranking.length > 0) return ranking;
@@ -127,9 +168,13 @@ export function QuizGameController({
   const statusLabel = useMemo(() => {
     if (game.status === "waiting") return "Esperando inicio";
     if (game.status === "finished") return "Finalizado";
-    if (game.question_phase === "reveal") return "Mostrando respuesta";
-    return "Recibiendo respuestas";
-  }, [game.status, game.question_phase]);
+    if (game.question_phase === "reveal") {
+      return autoAdvance ? "Mostrando respuesta (auto)" : "Mostrando respuesta";
+    }
+    return currentQuestion?.time_limit_seconds
+      ? "Recibiendo respuestas (con tiempo)"
+      : "Recibiendo respuestas";
+  }, [game.status, game.question_phase, autoAdvance, currentQuestion]);
 
   const handleStart = async () => {
     if (readOnly) return;
@@ -193,6 +238,13 @@ export function QuizGameController({
     }
   };
 
+  const timerLabel =
+    game.question_phase === "answering"
+      ? "Tiempo para responder"
+      : autoAdvance
+        ? "Siguiente pregunta en"
+        : null;
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal modal--wide quiz-game" onClick={(e) => e.stopPropagation()}>
@@ -205,6 +257,7 @@ export function QuizGameController({
               {game.status === "active" && currentQuestion && (
                 <> · Pregunta {game.current_question_idx + 1} de {questions.length}</>
               )}
+              {autoAdvance ? " · Avance automático" : " · Avance manual"}
             </p>
           </div>
           <button type="button" className="btn-icon btn-icon--on-dark" onClick={onClose} aria-label="Cerrar">
@@ -231,6 +284,18 @@ export function QuizGameController({
 
             {game.status === "active" && currentQuestion && (
               <>
+                {secondsLeft != null && timerLabel && (
+                  <div
+                    className={`quiz-game__timer ${secondsLeft <= 5 ? "is-urgent" : ""}`}
+                    aria-live="polite"
+                  >
+                    <IconClock size={18} />
+                    <span>
+                      {timerLabel}: <strong>{secondsLeft}s</strong>
+                    </span>
+                  </div>
+                )}
+
                 <div className="quiz-game__question-card">
                   <h3>{currentQuestion.question_text}</h3>
                   {currentQuestion.question_image_url && (
@@ -264,22 +329,49 @@ export function QuizGameController({
                 </div>
 
                 <div className="quiz-game__stats">
-                  Respuestas recibidas: <strong>{currentResponses.length}</strong> / {presence.length} conectados
+                  Respuestas recibidas: <strong>{currentResponses.length}</strong> /{" "}
+                  {presence.length} conectados
+                  {currentQuestion.time_limit_seconds
+                    ? ` · Límite: ${currentQuestion.time_limit_seconds}s`
+                    : " · Sin límite de tiempo"}
                 </div>
 
                 {!readOnly && (
                   <div className="quiz-game__actions">
                     {game.question_phase === "answering" ? (
-                      <button type="button" className="btn btn--primary" disabled={busy} onClick={handleReveal}>
+                      <button
+                        type="button"
+                        className="btn btn--primary"
+                        disabled={busy}
+                        onClick={handleReveal}
+                      >
                         <IconCheck size={16} /> Mostrar respuesta
                       </button>
                     ) : (
-                      <button type="button" className="btn btn--primary" disabled={busy} onClick={handleNext}>
-                        <IconArrowRight size={16} />
-                        {isLastQuestion ? "Finalizar juego" : "Siguiente pregunta"}
-                      </button>
+                      !autoAdvance && (
+                        <button
+                          type="button"
+                          className="btn btn--primary"
+                          disabled={busy}
+                          onClick={handleNext}
+                        >
+                          <IconArrowRight size={16} />
+                          {isLastQuestion ? "Finalizar juego" : "Siguiente pregunta"}
+                        </button>
+                      )
                     )}
-                    <button type="button" className="btn btn--secondary" disabled={busy} onClick={handleFinish}>
+                    {game.question_phase === "reveal" && autoAdvance && (
+                      <p className="quiz-empty">
+                        Avance automático activo
+                        {secondsLeft != null ? ` · ${secondsLeft}s` : ""}…
+                      </p>
+                    )}
+                    <button
+                      type="button"
+                      className="btn btn--secondary"
+                      disabled={busy}
+                      onClick={handleFinish}
+                    >
                       Finalizar ahora
                     </button>
                   </div>
@@ -316,11 +408,9 @@ export function QuizGameController({
                   </thead>
                   <tbody>
                     {(game.status === "active" ? connectedScoreboard : liveRanking).map(
-                      (row, index) => (
+                      (row) => (
                         <tr key={row.student_id}>
-                          {game.status === "active" && (
-                            <td>{row.order ?? "—"}</td>
-                          )}
+                          {game.status === "active" && <td>{row.order ?? "—"}</td>}
                           <td>
                             <div className="quiz-game__student-cell">
                               <span className="attendance-code">{row.student_code}</span>
@@ -392,8 +482,12 @@ export function QuizGameController({
                         <tr key={row.student_id}>
                           <td>{index + 1}</td>
                           <td>{row.student_name}</td>
-                          <td><span className="attendance-code">{row.student_code}</span></td>
-                          <td><span className="quiz-game__score-badge">{row.total_score}</span></td>
+                          <td>
+                            <span className="attendance-code">{row.student_code}</span>
+                          </td>
+                          <td>
+                            <span className="quiz-game__score-badge">{row.total_score}</span>
+                          </td>
                         </tr>
                       ))}
                     </tbody>

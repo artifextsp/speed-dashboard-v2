@@ -17,6 +17,7 @@ const EMPTY_QUESTION = {
   option_d: "",
   correct_option: "a",
   explanation_text: "",
+  time_limit_seconds: "30",
 };
 
 const OPTION_LABELS = [
@@ -30,6 +31,10 @@ export function QuizEditorModal({ quiz, onClose, onSave, onNotify }) {
   const questionsRef = useRef(null);
   const [title, setTitle] = useState(quiz?.title || "");
   const [description, setDescription] = useState(quiz?.description || "");
+  const [autoAdvance, setAutoAdvance] = useState(Boolean(quiz?.auto_advance));
+  const [autoAdvanceDelay, setAutoAdvanceDelay] = useState(
+    String(quiz?.auto_advance_delay_seconds ?? 5)
+  );
   const [questions, setQuestions] = useState(
     quiz?.questions?.length
       ? quiz.questions.map((q) => ({
@@ -41,6 +46,8 @@ export function QuizEditorModal({ quiz, onClose, onSave, onNotify }) {
           option_d: q.option_d || "",
           correct_option: q.correct_option || "a",
           explanation_text: q.explanation_text || "",
+          time_limit_seconds:
+            q.time_limit_seconds == null ? "" : String(q.time_limit_seconds),
         }))
       : [{ ...EMPTY_QUESTION }]
   );
@@ -96,6 +103,23 @@ export function QuizEditorModal({ quiz, onClose, onSave, onNotify }) {
         onNotify?.(`La pregunta ${i + 1} debe tener las 4 opciones`, true);
         return false;
       }
+      if (q.time_limit_seconds !== "" && q.time_limit_seconds != null) {
+        const secs = Number(q.time_limit_seconds);
+        if (!Number.isFinite(secs) || secs < 5 || secs > 600) {
+          onNotify?.(
+            `La pregunta ${i + 1}: el tiempo debe estar entre 5 y 600 segundos (o vacío = sin límite)`,
+            true
+          );
+          return false;
+        }
+      }
+    }
+    if (autoAdvance) {
+      const delay = Number(autoAdvanceDelay);
+      if (!Number.isFinite(delay) || delay < 2 || delay > 60) {
+        onNotify?.("El retraso de avance automático debe estar entre 2 y 60 segundos", true);
+        return false;
+      }
     }
     return true;
   };
@@ -105,7 +129,13 @@ export function QuizEditorModal({ quiz, onClose, onSave, onNotify }) {
     if (!validate()) return;
     setSaving(true);
     try {
-      await onSave({ title, description, questions });
+      await onSave({
+        title,
+        description,
+        questions,
+        auto_advance: autoAdvance,
+        auto_advance_delay_seconds: Number(autoAdvanceDelay) || 5,
+      });
       onClose();
     } catch (err) {
       onNotify?.(err.message || "Error al guardar cuestionario", true);
@@ -122,8 +152,8 @@ export function QuizEditorModal({ quiz, onClose, onSave, onNotify }) {
             <span className="quiz-editor__eyebrow">Evaluación en vivo · SPEED</span>
             <h2>{quiz ? "Editar cuestionario" : "Nuevo cuestionario"}</h2>
             <p className="quiz-editor__intro">
-              Cuatro opciones por pregunta. Durante la sesión en vivo tú decides cuándo
-              revelar la respuesta correcta a los estudiantes.
+              Configura el tiempo por pregunta y si el avance es automático o manual con clic.
+              Al agotarse el tiempo se revela la respuesta correcta.
             </p>
           </div>
           <button type="button" className="btn-icon btn-icon--on-dark" onClick={onClose} aria-label="Cerrar">
@@ -164,6 +194,41 @@ export function QuizEditorModal({ quiz, onClose, onSave, onNotify }) {
                   placeholder="Breve descripción para el docente"
                 />
               </div>
+              <div className="quiz-editor__timing-grid">
+                <div className="field">
+                  <label className="field__label" htmlFor="quiz-auto-advance">
+                    Paso entre preguntas
+                  </label>
+                  <select
+                    id="quiz-auto-advance"
+                    className="input quiz-editor__select"
+                    value={autoAdvance ? "auto" : "manual"}
+                    onChange={(e) => setAutoAdvance(e.target.value === "auto")}
+                  >
+                    <option value="manual">Manual (con clic del docente)</option>
+                    <option value="auto">Automático tras revelar</option>
+                  </select>
+                </div>
+                <div className="field">
+                  <label className="field__label" htmlFor="quiz-auto-delay">
+                    Segundos tras revelar <span className="quiz-editor__optional">(auto)</span>
+                  </label>
+                  <input
+                    id="quiz-auto-delay"
+                    className="input"
+                    type="number"
+                    min={2}
+                    max={60}
+                    value={autoAdvanceDelay}
+                    disabled={!autoAdvance}
+                    onChange={(e) => setAutoAdvanceDelay(e.target.value)}
+                  />
+                </div>
+              </div>
+              <p className="quiz-editor__hint">
+                Con avance automático, al agotar el tiempo se muestra la respuesta y luego pasa
+                sola a la siguiente pregunta. Con avance manual, tú haces clic.
+              </p>
             </div>
           </section>
 
@@ -246,6 +311,22 @@ export function QuizEditorModal({ quiz, onClose, onSave, onNotify }) {
                       value={question.question_image_url}
                       onChange={(e) => updateQuestion(index, "question_image_url", e.target.value)}
                       placeholder="https://..."
+                    />
+                  </div>
+
+                  <div className="field">
+                    <label className="field__label">
+                      Tiempo límite (segundos){" "}
+                      <span className="quiz-editor__optional">(vacío = sin límite)</span>
+                    </label>
+                    <input
+                      className="input"
+                      type="number"
+                      min={5}
+                      max={600}
+                      value={question.time_limit_seconds}
+                      onChange={(e) => updateQuestion(index, "time_limit_seconds", e.target.value)}
+                      placeholder="Ej. 30"
                     />
                   </div>
 
