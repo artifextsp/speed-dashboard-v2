@@ -171,14 +171,10 @@ export function QuizEditorModal({ quiz, onClose, onSave, onNotify }) {
         aria-modal="true"
         aria-labelledby="quiz-editor-title"
       >
-        <header className="quiz-editor__banner">
-          <div>
+        <header className="quiz-editor__banner quiz-editor__banner--compact">
+          <div className="quiz-editor__banner-text">
             <span className="quiz-editor__eyebrow">Evaluación en vivo · SPEED</span>
             <h2 id="quiz-editor-title">{quiz ? "Editar cuestionario" : "Nuevo cuestionario"}</h2>
-            <p className="quiz-editor__intro">
-              Configura el tiempo por pregunta y si el avance es automático o manual con clic.
-              Al agotarse el tiempo se revela la respuesta correcta.
-            </p>
           </div>
           <button
             type="button"
@@ -191,99 +187,84 @@ export function QuizEditorModal({ quiz, onClose, onSave, onNotify }) {
         </header>
 
         <form className="quiz-editor__form" onSubmit={handleSubmit}>
-          <section className="quiz-editor__section">
-            <div className="quiz-editor__section-head">
-              <h3>Información general</h3>
-              <p>Visible para el docente al gestionar el cuestionario.</p>
+          <section className="quiz-editor__meta-bar" aria-label="Configuración del cuestionario">
+            <div className="field quiz-editor__meta-title">
+              <label className="field__label" htmlFor="quiz-title">
+                Título
+              </label>
+              <input
+                id="quiz-title"
+                className="input"
+                value={title}
+                onChange={(e) => {
+                  markDirty();
+                  setTitle(e.target.value);
+                }}
+                placeholder="Ej. Saberes previos — Robótica"
+                required
+              />
             </div>
-            <div className="quiz-editor__meta-card">
-              <div className="field">
-                <label className="field__label" htmlFor="quiz-title">
-                  Título del cuestionario
-                </label>
-                <input
-                  id="quiz-title"
-                  className="input"
-                  value={title}
-                  onChange={(e) => {
-                    markDirty();
-                    setTitle(e.target.value);
-                  }}
-                  placeholder="Ej. Saberes previos — Robótica"
-                  required
-                />
-              </div>
-              <div className="field">
-                <label className="field__label" htmlFor="quiz-description">
-                  Descripción <span className="quiz-editor__optional">(opcional)</span>
-                </label>
-                <textarea
-                  id="quiz-description"
-                  className="input input--area quiz-editor__textarea"
-                  value={description}
-                  onChange={(e) => {
-                    markDirty();
-                    setDescription(e.target.value);
-                  }}
-                  rows={2}
-                  placeholder="Breve descripción para el docente"
-                />
-              </div>
-              <div className="quiz-editor__timing-grid">
-                <div className="field">
-                  <label className="field__label" htmlFor="quiz-auto-advance">
-                    Paso entre preguntas
-                  </label>
-                  <select
-                    id="quiz-auto-advance"
-                    className="input quiz-editor__select"
-                    value={autoAdvance ? "auto" : "manual"}
-                    onChange={(e) => {
-                      markDirty();
-                      setAutoAdvance(e.target.value === "auto");
-                    }}
-                  >
-                    <option value="manual">Manual (con clic del docente)</option>
-                    <option value="auto">Automático tras revelar</option>
-                  </select>
-                </div>
-                <div className="field">
-                  <label className="field__label" htmlFor="quiz-auto-delay">
-                    Segundos tras revelar <span className="quiz-editor__optional">(auto)</span>
-                  </label>
-                  <input
-                    id="quiz-auto-delay"
-                    className="input"
-                    type="number"
-                    min={2}
-                    max={60}
-                    value={autoAdvanceDelay}
-                    disabled={!autoAdvance}
-                    onChange={(e) => {
-                      markDirty();
-                      setAutoAdvanceDelay(e.target.value);
-                    }}
-                  />
-                </div>
-              </div>
-              <p className="quiz-editor__hint">
-                Con avance automático, al agotar el tiempo se muestra la respuesta y luego pasa
-                sola a la siguiente pregunta. Con avance manual, tú haces clic.
-              </p>
+            <div className="field quiz-editor__meta-desc">
+              <label className="field__label" htmlFor="quiz-description">
+                Descripción <span className="quiz-editor__optional">(opcional)</span>
+              </label>
+              <input
+                id="quiz-description"
+                className="input"
+                value={description}
+                onChange={(e) => {
+                  markDirty();
+                  setDescription(e.target.value);
+                }}
+                placeholder="Breve nota para el docente"
+              />
+            </div>
+            <div className="field quiz-editor__meta-advance">
+              <label className="field__label" htmlFor="quiz-auto-advance">
+                Paso entre preguntas
+              </label>
+              <select
+                id="quiz-auto-advance"
+                className="input quiz-editor__select"
+                value={autoAdvance ? "auto" : "manual"}
+                onChange={(e) => {
+                  markDirty();
+                  setAutoAdvance(e.target.value === "auto");
+                }}
+                title="Manual: avanza con clic. Automático: pasa solo tras revelar."
+              >
+                <option value="manual">Manual (clic)</option>
+                <option value="auto">Automático</option>
+              </select>
+            </div>
+            <div className="field quiz-editor__meta-delay">
+              <label className="field__label" htmlFor="quiz-auto-delay">
+                Seg. tras revelar
+              </label>
+              <input
+                id="quiz-auto-delay"
+                className="input"
+                type="number"
+                min={2}
+                max={60}
+                value={autoAdvanceDelay}
+                disabled={!autoAdvance}
+                onChange={(e) => {
+                  markDirty();
+                  setAutoAdvanceDelay(e.target.value);
+                }}
+                title="Segundos de espera antes de pasar a la siguiente pregunta (solo en modo automático)"
+              />
             </div>
           </section>
 
-          <section className="quiz-editor__section">
+          <section className="quiz-editor__section quiz-editor__section--questions">
             <div className="quiz-editor__questions-head">
               <div className="quiz-editor__section-head">
                 <h3>
                   <IconListCheck size={18} stroke={1.8} />
                   Preguntas ({questions.length})
                 </h3>
-                <p>
-                  La nueva pregunta aparece arriba. Usa las flechas para cambiar el orden
-                  en el juego.
-                </p>
               </div>
               <button type="button" className="btn btn--primary" onClick={addQuestion}>
                 <IconPlus size={16} /> Agregar pregunta
