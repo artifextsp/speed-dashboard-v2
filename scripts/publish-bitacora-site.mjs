@@ -58,6 +58,16 @@ function patchIndexHtml(html) {
     );
   }
 
+  // Solo logo STEM en el encabezado del sitio público
+  out = out.replace(
+    /<img[^>]*logo-uniminuto\.png[^>]*>\s*/g,
+    ""
+  );
+  out = out.replace(
+    /<img[^>]*logo-bogota-educacion\.png[^>]*>\s*/g,
+    ""
+  );
+
   return out;
 }
 

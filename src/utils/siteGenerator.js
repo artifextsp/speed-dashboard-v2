@@ -108,8 +108,6 @@ function renderSiteHeader() {
         <p class="site-header__tagline">Robótica educativa para docentes usando metodologías ABP.</p>
       </div>
       <div class="site-header__logos">
-        <img src="${SITE_LOGO_PATHS.uniminuto}" alt="Corporación Universitaria UNIMINUTO" class="site-header__logo site-header__logo--uniminuto" />
-        <img src="${SITE_LOGO_PATHS.bogota}" alt="Secretaría de Educación de Bogotá" class="site-header__logo site-header__logo--bogota" />
         <img src="${SITE_LOGO_PATHS.stem}" alt="Olimpiadas STEM" class="site-header__logo site-header__logo--stem" />
       </div>
     </div>
