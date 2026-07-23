@@ -10,7 +10,7 @@ import path from "node:path";
 import { publishToGitHub } from "../src/utils/githubPublisher.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const SITE_BUILD_VERSION = "2026-07-22-bitacora-v1";
+const SITE_BUILD_VERSION = "2026-07-23-bitacora-v2";
 
 const BITACORA_ICON_SVG = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>`;
 
@@ -52,21 +52,27 @@ function patchIndexHtml(html) {
   );
 
   if (!out.includes("site-bitacora-cta")) {
-    out = out.replace(
-      /(<a class="site-quiz-scores-cta"[\s\S]*?<\/a>)/,
-      `$1\n${BITACORA_CTA}`
-    );
+    if (out.includes("site-quiz-scores-cta")) {
+      out = out.replace(
+        /(<a class="site-quiz-scores-cta"[\s\S]*?<\/a>)/,
+        `$1\n${BITACORA_CTA}`
+      );
+    } else if (out.includes("site-quiz-cta")) {
+      out = out.replace(
+        /(<a class="site-quiz-cta"[\s\S]*?<\/a>)/,
+        `$1\n${BITACORA_CTA}`
+      );
+    } else {
+      out = out.replace(
+        /(<\/header>)/,
+        `${BITACORA_CTA}\n  $1`
+      );
+    }
   }
 
   // Solo logo STEM en el encabezado del sitio público
-  out = out.replace(
-    /<img[^>]*logo-uniminuto\.png[^>]*>\s*/g,
-    ""
-  );
-  out = out.replace(
-    /<img[^>]*logo-bogota-educacion\.png[^>]*>\s*/g,
-    ""
-  );
+  out = out.replace(/<img[^>]*logo-uniminuto\.png[^>]*>\s*/g, "");
+  out = out.replace(/<img[^>]*logo-bogota-educacion\.png[^>]*>\s*/g, "");
 
   return out;
 }

@@ -7,6 +7,9 @@ import quizJs from "../../public/site-template/quiz.js?raw";
 import quizCss from "../../public/site-template/quiz.css?raw";
 import quizPuntosHtml from "../../public/site-template/quiz-puntos.html?raw";
 import quizPuntosJs from "../../public/site-template/quiz-puntos.js?raw";
+import bitacoraHtml from "../../public/site-template/bitacora.html?raw";
+import bitacoraJs from "../../public/site-template/bitacora.js?raw";
+import bitacoraCss from "../../public/site-template/bitacora.css?raw";
 import { getPhaseColor, MODALITY_LABELS } from "./constants";
 import { resolveClassComponents } from "../kernel/legacyMigration";
 import { withDisplayNumbers } from "../kernel/componentManager";
@@ -25,7 +28,7 @@ import {
   stampSiteJs,
 } from "./siteAssetsGuard.js";
 
-const SITE_BUILD_VERSION = "2026-07-08-lightbox-zoom-v1";
+const SITE_BUILD_VERSION = "2026-07-23-bitacora-v2";
 const SITE_PUBLISHED_AT = () => new Date().toISOString();
 
 export { SITE_BUILD_VERSION, SITE_ASSETS_VERSION };
@@ -370,6 +373,9 @@ export async function generateSiteFiles(phases, sessions, options = {}) {
     "quiz.css": quizCss,
     "quiz-puntos.html": quizPuntosHtml,
     "quiz-puntos.js": quizPuntosJs,
+    "bitacora.html": bitacoraHtml,
+    "bitacora.js": bitacoraJs,
+    "bitacora.css": bitacoraCss,
     "index.html": renderIndexPage(phases, allSessions),
     ...assetFiles,
   };
