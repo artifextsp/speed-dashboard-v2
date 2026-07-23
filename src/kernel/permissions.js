@@ -17,12 +17,15 @@ const PERMISSIONS = {
     "quiz.create",
     "quiz.manage",
     "quiz.view",
+    "evidence.manage",
+    "evidence.view",
   ]),
   supervisor: new Set([
     "class.view",
     "class.downloadPdf",
     "attendance.view",
     "quiz.view",
+    "evidence.view",
   ]),
   student: new Set(["class.view", "class.downloadPdf"]),
 };
@@ -52,6 +55,8 @@ export function getClassPermissions(speedRole) {
     canCreateQuiz: can(kernelRole, "quiz.create"),
     canManageQuiz: can(kernelRole, "quiz.manage"),
     canViewQuiz: can(kernelRole, "quiz.view"),
+    canManageEvidence: can(kernelRole, "evidence.manage"),
+    canViewEvidence: can(kernelRole, "evidence.view"),
     canManageStudents: speedRole === "admin",
     readOnly: kernelRole === "supervisor",
   };

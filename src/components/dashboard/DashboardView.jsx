@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { IconLogout, IconEye, IconKey, IconPlus, IconUsers, IconChartBar, IconBrain } from "@tabler/icons-react";
+import { IconLogout, IconEye, IconKey, IconPlus, IconUsers, IconChartBar, IconBrain, IconNotebook } from "@tabler/icons-react";
 import { PHASE_COLORS, UNASSIGNED_BLOCK_FILTER } from "../../utils/constants";
 import { getClassPermissions } from "../../kernel/permissions";
 import { sortSessionsByDate } from "../../kernel/sortByDate";
@@ -19,6 +19,7 @@ import { StudentsAdminPanel } from "../attendance/StudentsAdminPanel";
 import { AttendanceStatsPanel } from "../attendance/AttendanceStatsPanel";
 import { SessionAttendanceModal } from "../attendance/SessionAttendanceModal";
 import { QuizManagerPanel } from "../quiz/QuizManagerPanel";
+import { EvidencePanel } from "../evidence/EvidencePanel";
 
 export function DashboardView({
   phases,
@@ -46,6 +47,7 @@ export function DashboardView({
   const [showStudentsAdmin, setShowStudentsAdmin] = useState(false);
   const [showAttendanceStats, setShowAttendanceStats] = useState(false);
   const [showQuizManager, setShowQuizManager] = useState(false);
+  const [showEvidencePanel, setShowEvidencePanel] = useState(false);
   const [attendanceSession, setAttendanceSession] = useState(null);
   const isSupervisor = user?.role === "supervisor";
   const isAdmin = user?.role === "admin";
@@ -184,7 +186,10 @@ export function DashboardView({
 
       <StatsBar sessions={sortedSessions} />
 
-      {(permissions.canManageStudents || permissions.canViewAttendance || permissions.canViewQuiz) && (
+      {(permissions.canManageStudents ||
+        permissions.canViewAttendance ||
+        permissions.canViewQuiz ||
+        permissions.canViewEvidence) && (
         <div className="dashboard__attendance-bar">
           {permissions.canManageStudents && (
             <button
@@ -211,6 +216,15 @@ export function DashboardView({
               onClick={() => setShowQuizManager(true)}
             >
               <IconBrain size={16} /> Cuestionarios
+            </button>
+          )}
+          {permissions.canViewEvidence && (
+            <button
+              type="button"
+              className="btn btn--secondary"
+              onClick={() => setShowEvidencePanel(true)}
+            >
+              <IconNotebook size={16} /> Bitácora de evidencias
             </button>
           )}
         </div>
@@ -365,6 +379,15 @@ export function DashboardView({
           user={user}
           readOnly={!permissions.canManageQuiz}
           onClose={() => setShowQuizManager(false)}
+          onNotify={onPublishResult}
+        />
+      )}
+
+      {showEvidencePanel && (
+        <EvidencePanel
+          user={user}
+          readOnly={!permissions.canManageEvidence}
+          onClose={() => setShowEvidencePanel(false)}
           onNotify={onPublishResult}
         />
       )}

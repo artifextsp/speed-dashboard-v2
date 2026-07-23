@@ -3957,3 +3957,157 @@ button.markdown-image-card__frame {
 .attendance-table--compact td {
   padding: 8px 10px;
 }
+
+/* ============================================================
+   Evidence module (bitácora digital)
+   ============================================================ */
+
+.evidence-toolbar {
+  display: flex;
+  align-items: center;
+}
+
+.evidence-filter-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.evidence-filter-btn {
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--color-border-tertiary);
+  background: #fff;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.evidence-filter-btn:hover {
+  border-color: #534ab7;
+}
+
+.evidence-filter-btn.is-active {
+  background: #534ab7;
+  border-color: #534ab7;
+  color: #fff;
+}
+
+.evidence-list {
+  overflow-y: auto;
+}
+
+.evidence-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.evidence-card {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--color-border-tertiary);
+  border-radius: var(--radius-lg);
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+}
+
+.evidence-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.evidence-card__head > div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.evidence-status {
+  display: inline-flex;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.evidence-status--pending {
+  color: #92400e;
+  background: #fef3c7;
+}
+
+.evidence-status--approved {
+  color: #166534;
+  background: #dcfce7;
+}
+
+.evidence-status--rejected {
+  color: #991b1b;
+  background: #fee2e2;
+}
+
+.evidence-card__body {
+  display: grid;
+  gap: 6px;
+}
+
+.evidence-card__file {
+  margin: 0;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  word-break: break-word;
+}
+
+.evidence-card__meta {
+  font-weight: 500;
+  color: var(--color-text-tertiary);
+  font-size: 12px;
+}
+
+.evidence-card__desc {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.evidence-download-btn {
+  justify-self: start;
+}
+
+.evidence-card__review {
+  display: grid;
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--color-border-tertiary);
+}
+
+.evidence-card__review textarea {
+  margin-bottom: 0;
+}
+
+.evidence-card__actions {
+  display: flex;
+  gap: 6px;
+}
+
+.evidence-approve-btn:not(:disabled):hover {
+  color: #166534;
+  background: #dcfce7;
+}
+
+.evidence-reject-btn:not(:disabled):hover {
+  color: #991b1b;
+  background: #fee2e2;
+}
+
+.evidence-card__reviewed {
+  margin: 0;
+  font-size: 12px;
+  color: var(--color-text-tertiary);
+}
