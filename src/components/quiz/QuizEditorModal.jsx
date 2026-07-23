@@ -53,14 +53,19 @@ export function QuizEditorModal({ quiz, onClose, onSave, onNotify }) {
   );
   const [focusedIndex, setFocusedIndex] = useState(0);
   const [saving, setSaving] = useState(false);
+  const [dirty, setDirty] = useState(false);
+
+  const markDirty = () => setDirty(true);
 
   const updateQuestion = (index, field, value) => {
+    markDirty();
     setQuestions((prev) =>
       prev.map((q, i) => (i === index ? { ...q, [field]: value } : q))
     );
   };
 
   const addQuestion = () => {
+    markDirty();
     setQuestions((prev) => [{ ...EMPTY_QUESTION }, ...prev]);
     setFocusedIndex(0);
     requestAnimationFrame(() => {
@@ -73,6 +78,7 @@ export function QuizEditorModal({ quiz, onClose, onSave, onNotify }) {
       onNotify?.("Debe haber al menos una pregunta", true);
       return;
     }
+    markDirty();
     setQuestions((prev) => prev.filter((_, i) => i !== index));
     setFocusedIndex((current) => Math.max(0, Math.min(current, questions.length - 2)));
   };
@@ -80,6 +86,7 @@ export function QuizEditorModal({ quiz, onClose, onSave, onNotify }) {
   const moveQuestion = (index, direction) => {
     const next = index + direction;
     if (next < 0 || next >= questions.length) return;
+    markDirty();
     setQuestions((prev) => {
       const copy = [...prev];
       [copy[index], copy[next]] = [copy[next], copy[index]];
@@ -144,19 +151,41 @@ export function QuizEditorModal({ quiz, onClose, onSave, onNotify }) {
     }
   };
 
+  const requestClose = () => {
+    if (
+      dirty &&
+      !window.confirm(
+        "¿Cerrar sin guardar? Se perderán los cambios no guardados del cuestionario."
+      )
+    ) {
+      return;
+    }
+    onClose();
+  };
+
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal modal--wide quiz-editor" onClick={(e) => e.stopPropagation()}>
+    <div className="modal-overlay modal-overlay--locked" role="presentation">
+      <div
+        className="modal modal--wide quiz-editor"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="quiz-editor-title"
+      >
         <header className="quiz-editor__banner">
           <div>
             <span className="quiz-editor__eyebrow">Evaluación en vivo · SPEED</span>
-            <h2>{quiz ? "Editar cuestionario" : "Nuevo cuestionario"}</h2>
+            <h2 id="quiz-editor-title">{quiz ? "Editar cuestionario" : "Nuevo cuestionario"}</h2>
             <p className="quiz-editor__intro">
               Configura el tiempo por pregunta y si el avance es automático o manual con clic.
               Al agotarse el tiempo se revela la respuesta correcta.
             </p>
           </div>
-          <button type="button" className="btn-icon btn-icon--on-dark" onClick={onClose} aria-label="Cerrar">
+          <button
+            type="button"
+            className="btn-icon btn-icon--on-dark"
+            onClick={requestClose}
+            aria-label="Cerrar"
+          >
             <IconX size={18} />
           </button>
         </header>
@@ -176,7 +205,10 @@ export function QuizEditorModal({ quiz, onClose, onSave, onNotify }) {
                   id="quiz-title"
                   className="input"
                   value={title}
-                  onChange={(e) => setTitle(e.target.value)}
+                  onChange={(e) => {
+                    markDirty();
+                    setTitle(e.target.value);
+                  }}
                   placeholder="Ej. Saberes previos — Robótica"
                   required
                 />
@@ -189,7 +221,10 @@ export function QuizEditorModal({ quiz, onClose, onSave, onNotify }) {
                   id="quiz-description"
                   className="input input--area quiz-editor__textarea"
                   value={description}
-                  onChange={(e) => setDescription(e.target.value)}
+                  onChange={(e) => {
+                    markDirty();
+                    setDescription(e.target.value);
+                  }}
                   rows={2}
                   placeholder="Breve descripción para el docente"
                 />
@@ -203,7 +238,10 @@ export function QuizEditorModal({ quiz, onClose, onSave, onNotify }) {
                     id="quiz-auto-advance"
                     className="input quiz-editor__select"
                     value={autoAdvance ? "auto" : "manual"}
-                    onChange={(e) => setAutoAdvance(e.target.value === "auto")}
+                    onChange={(e) => {
+                      markDirty();
+                      setAutoAdvance(e.target.value === "auto");
+                    }}
                   >
                     <option value="manual">Manual (con clic del docente)</option>
                     <option value="auto">Automático tras revelar</option>
@@ -221,7 +259,10 @@ export function QuizEditorModal({ quiz, onClose, onSave, onNotify }) {
                     max={60}
                     value={autoAdvanceDelay}
                     disabled={!autoAdvance}
-                    onChange={(e) => setAutoAdvanceDelay(e.target.value)}
+                    onChange={(e) => {
+                      markDirty();
+                      setAutoAdvanceDelay(e.target.value);
+                    }}
                   />
                 </div>
               </div>
@@ -296,7 +337,7 @@ export function QuizEditorModal({ quiz, onClose, onSave, onNotify }) {
                       className="input input--area quiz-editor__textarea"
                       value={question.question_text}
                       onChange={(e) => updateQuestion(index, "question_text", e.target.value)}
-                      rows={2}
+                      rows={3}
                       placeholder="Escribe la pregunta"
                       required
                     />
@@ -382,7 +423,7 @@ export function QuizEditorModal({ quiz, onClose, onSave, onNotify }) {
           </section>
 
           <footer className="quiz-editor__footer">
-            <button type="button" className="btn btn--secondary" onClick={onClose}>
+            <button type="button" className="btn btn--secondary" onClick={requestClose}>
               Cancelar
             </button>
             <button type="submit" className="btn btn--primary" disabled={saving}>
