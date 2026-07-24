@@ -3965,6 +3965,7 @@ button.markdown-image-card__frame {
 .evidence-toolbar {
   display: flex;
   align-items: center;
+  flex-shrink: 0;
 }
 
 .evidence-filter-group {
@@ -3995,14 +3996,40 @@ button.markdown-image-card__frame {
   color: #fff;
 }
 
-.evidence-list {
+.modal.modal--wide.evidence-panel {
+  display: flex;
+  flex-direction: column;
+  width: min(1280px, 98vw);
+  height: min(92vh, 900px);
+  max-height: 92vh;
+  overflow: hidden;
+}
+
+.evidence-panel .quiz-manager__banner {
+  flex-shrink: 0;
+}
+
+.evidence-panel .evidence-toolbar {
+  flex-shrink: 0;
+}
+
+.evidence-panel .quiz-manager__list.evidence-list {
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  padding-bottom: 24px;
 }
 
 .evidence-cards {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 16px;
+  padding-bottom: 8px;
 }
 
 .evidence-card {

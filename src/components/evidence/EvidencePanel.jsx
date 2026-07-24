@@ -92,7 +92,10 @@ export function EvidencePanel({ user, readOnly, onClose, onNotify }) {
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal modal--wide quiz-manager" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="modal modal--wide quiz-manager evidence-panel"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="quiz-editor__banner quiz-manager__banner">
           <div>
             <span className="quiz-editor__eyebrow">Bitácora digital</span>
